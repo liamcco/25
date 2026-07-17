@@ -85,14 +85,16 @@ export async function saveGuestDisplayName(formData: FormData) {
     redirect("/admin/login");
   }
 
+  const guestId = getRequiredString(formData, "guestId");
+
   await updateGuestDisplayName(createSql(), {
-    guestId: getRequiredString(formData, "guestId"),
+    guestId,
     displayName: getRequiredString(formData, "displayName"),
     origin: await getRequestOrigin(),
   });
 
-  revalidatePath("/admin");
-  redirect("/admin?guestSaved=1");
+  revalidateAdminGuest(guestId);
+  redirect(getAdminRedirectPath(formData, "/admin?guestSaved=1"));
 }
 
 export async function regenerateInvitation(formData: FormData) {
@@ -100,13 +102,15 @@ export async function regenerateInvitation(formData: FormData) {
     redirect("/admin/login");
   }
 
+  const guestId = getRequiredString(formData, "guestId");
+
   await regenerateGuestInvitation(createSql(), {
-    guestId: getRequiredString(formData, "guestId"),
+    guestId,
     origin: await getRequestOrigin(),
   });
 
-  revalidatePath("/admin");
-  redirect("/admin?invitationRegenerated=1");
+  revalidateAdminGuest(guestId);
+  redirect(getAdminRedirectPath(formData, "/admin?invitationRegenerated=1"));
 }
 
 export async function revokeInvitation(formData: FormData) {
@@ -114,13 +118,12 @@ export async function revokeInvitation(formData: FormData) {
     redirect("/admin/login");
   }
 
-  await revokeGuestInvitation(
-    createSql(),
-    getRequiredString(formData, "guestId"),
-  );
+  const guestId = getRequiredString(formData, "guestId");
 
-  revalidatePath("/admin");
-  redirect("/admin?invitationRevoked=1");
+  await revokeGuestInvitation(createSql(), guestId);
+
+  revalidateAdminGuest(guestId);
+  redirect(getAdminRedirectPath(formData, "/admin?invitationRevoked=1"));
 }
 
 function getRequiredString(formData: FormData, name: string) {
@@ -139,4 +142,19 @@ function parseLateResponsePolicy(value: string): LateResponsePolicy {
   }
 
   throw new Error("Invalid Late Response Policy");
+}
+
+function getAdminRedirectPath(formData: FormData, fallback: string) {
+  const value = formData.get("redirectTo");
+
+  if (typeof value === "string" && value.startsWith("/admin")) {
+    return value;
+  }
+
+  return fallback;
+}
+
+function revalidateAdminGuest(guestId: string) {
+  revalidatePath("/admin");
+  revalidatePath(`/admin/guests/${guestId}`);
 }

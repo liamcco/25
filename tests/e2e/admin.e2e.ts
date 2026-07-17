@@ -1,4 +1,23 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
+
+async function openGuestDetail(page: Page, displayName: string) {
+  await page
+    .getByRole("link", {
+      name: `Open ${displayName} guest detail page`,
+    })
+    .click();
+}
+
+async function getInvitationUrlFromGuestDetail(
+  page: Page,
+  displayName: string,
+) {
+  return page
+    .getByRole("textbox", {
+      name: `${displayName} Invitation URL`,
+    })
+    .inputValue();
+}
 
 test.describe("Admin View", () => {
   test.describe.configure({ mode: "serial" });
@@ -20,8 +39,9 @@ test.describe("Admin View", () => {
     await page.getByRole("button", { name: "Log in" }).click();
 
     await expect(page).toHaveURL(/\/admin$/);
+    await page.getByRole("tab", { name: "Party settings" }).click();
     await expect(
-      page.getByRole("heading", { name: "Party Settings" }),
+      page.getByRole("heading", { name: "Party settings" }),
     ).toBeVisible();
 
     await page.getByLabel("Title").fill("Liam's 25th");
@@ -62,39 +82,35 @@ test.describe("Admin View", () => {
     await page.getByLabel("Password").fill("test-admin-password");
     await page.getByRole("button", { name: "Log in" }).click();
 
+    await page.getByRole("tab", { name: "Guest list" }).click();
     await page.locator("#newGuestDisplayName").fill(displayName);
     await page.getByRole("button", { name: "Create Guest" }).click();
 
     await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
-    const invitationUrlInput = page.getByRole("textbox", {
-      name: `${displayName} Invitation URL`,
-    });
-    await expect(invitationUrlInput).toHaveValue(/\/i\/ada-lovelace-/);
-    const invitationUrl = await invitationUrlInput.inputValue();
+    await openGuestDetail(page, displayName);
+    const guestDetailUrl = page.url();
+    const invitationUrl = await getInvitationUrlFromGuestDetail(
+      page,
+      displayName,
+    );
+    expect(invitationUrl).toMatch(/\/i\/ada-lovelace-/);
 
     await page.goto(invitationUrl);
     await expect(page.getByText(`Invitation for ${displayName}`)).toBeVisible();
     await expect(page.getByText("Party details")).toBeVisible();
 
-    await page.goto("/admin");
-    const displayNameInput = page.locator(
-      `input[name="displayName"][value="${displayName}"]`,
-    );
+    await page.goto(guestDetailUrl);
+    const displayNameInput = page.locator('input[name="displayName"]');
     await displayNameInput.fill(editedName);
-    await page
-      .locator("form")
-      .filter({ has: displayNameInput })
-      .getByRole("button", { name: "Save Guest" })
-      .click();
+    await page.getByRole("button", { name: "Save Guest" }).click();
 
     await expect(
       page.getByText("The canonical Invitation URL has been updated."),
     ).toBeVisible();
-    const editedInvitationUrl = await page
-      .getByRole("textbox", {
-        name: `${editedName} Invitation URL`,
-      })
-      .inputValue();
+    const editedInvitationUrl = await getInvitationUrlFromGuestDetail(
+      page,
+      editedName,
+    );
 
     expect(editedInvitationUrl).toMatch(/\/i\/grace-hopper-/);
     expect(editedInvitationUrl).toContain(
@@ -134,23 +150,26 @@ test.describe("Admin View", () => {
       no: await getCount("no"),
     };
 
+    await page.getByRole("tab", { name: "Guest list" }).click();
     await page.locator("#newGuestDisplayName").fill(displayName);
     await page.getByRole("button", { name: "Create Guest" }).click();
 
+    await page.goto("/admin");
     await expect(page.getByTestId("response-count-total-guests")).toHaveText(
       String(initialCounts.totalGuests + 1),
     );
     await expect(page.getByTestId("response-count-not-responded")).toHaveText(
       String(initialCounts.notResponded + 1),
     );
+    await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
       "Not responded",
     );
-    const invitationUrl = await page
-      .getByRole("textbox", {
-        name: `${displayName} Invitation URL`,
-      })
-      .inputValue();
+    await openGuestDetail(page, displayName);
+    const invitationUrl = await getInvitationUrlFromGuestDetail(
+      page,
+      displayName,
+    );
 
     await page.goto(invitationUrl);
     await expect(page.getByText("Current RSVP: Not responded")).toBeVisible();
@@ -181,14 +200,11 @@ test.describe("Admin View", () => {
     await expect(page.getByTestId("response-count-no")).toHaveText(
       String(initialCounts.no),
     );
-    await expect(
-      page.getByRole("textbox", {
-        name: `${displayName} Invitation URL`,
-      }),
-    ).toBeVisible();
+    await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
       "Yes",
     );
+    await openGuestDetail(page, displayName);
     await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
       "Looking forward to it.",
     );
@@ -215,14 +231,11 @@ test.describe("Admin View", () => {
     await expect(page.getByTestId("response-count-no")).toHaveText(
       String(initialCounts.no + 1),
     );
-    await expect(
-      page.getByRole("textbox", {
-        name: `${displayName} Invitation URL`,
-      }),
-    ).toBeVisible();
+    await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
       "No",
     );
+    await openGuestDetail(page, displayName);
     await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
       "Plans changed.",
     );
@@ -243,14 +256,17 @@ test.describe("Admin View", () => {
     await page.getByLabel("Password").fill("test-admin-password");
     await page.getByRole("button", { name: "Log in" }).click();
 
+    await page.getByRole("tab", { name: "Guest list" }).click();
     await page.locator("#newGuestDisplayName").fill(displayName);
     await page.getByRole("button", { name: "Create Guest" }).click();
     await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
 
-    const invitationUrlInput = page.getByRole("textbox", {
-      name: `${displayName} Invitation URL`,
-    });
-    const oldInvitationUrl = await invitationUrlInput.inputValue();
+    await openGuestDetail(page, displayName);
+    const guestDetailUrl = page.url();
+    const oldInvitationUrl = await getInvitationUrlFromGuestDetail(
+      page,
+      displayName,
+    );
     const guestSlug = new URL(oldInvitationUrl).pathname.split("/")[2];
 
     await page.goto(oldInvitationUrl);
@@ -259,26 +275,26 @@ test.describe("Admin View", () => {
     await page.getByRole("button", { name: "Save RSVP" }).click();
     await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
 
-    await page.goto("/admin");
+    await page.goto("/admin?tab=guests");
     const guestRow = page.getByTestId(`guest-row-${guestSlug}`);
     await expect(
       guestRow.getByTestId(`guest-rsvp-status-${guestSlug}`),
     ).toHaveText("Yes");
-    await expect(
-      guestRow.getByTestId(`guest-rsvp-note-${guestSlug}`),
-    ).toHaveText("Please save this note.");
+    await openGuestDetail(page, displayName);
+    await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
+      "Please save this note.",
+    );
 
-    await guestRow
+    await page
       .getByRole("button", { name: "Regenerate Invitation URL" })
       .click();
     await expect(
       page.getByText("The previous Invitation URL is no longer active."),
     ).toBeVisible();
-    const newInvitationUrl = await page
-      .getByRole("textbox", {
-        name: `${displayName} Invitation URL`,
-      })
-      .inputValue();
+    const newInvitationUrl = await getInvitationUrlFromGuestDetail(
+      page,
+      displayName,
+    );
 
     expect(newInvitationUrl).not.toBe(oldInvitationUrl);
     expect(newInvitationUrl).toMatch(/\/i\/lifecycle-guest-/);
@@ -294,29 +310,28 @@ test.describe("Admin View", () => {
     await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
     await expect(page.getByText("Please save this note.")).toHaveCount(0);
 
-    await page.goto("/admin");
-    await page
-      .getByTestId(`guest-row-${guestSlug}`)
-      .getByRole("button", { name: "Revoke Invitation" })
-      .click();
+    await page.goto(guestDetailUrl);
+    await page.getByRole("button", { name: "Revoke Invitation" }).click();
     await expect(
       page.getByText("The Invitation URL is no longer active."),
     ).toBeVisible();
+    await page.goto("/admin?tab=guests");
     const revokedGuestRow = page.getByTestId(`guest-row-${guestSlug}`);
     await expect(revokedGuestRow).toBeVisible();
+    await openGuestDetail(page, displayName);
     await expect(
-      revokedGuestRow.getByText(
+      page.getByText(
         "Regenerate this Guest's Invitation URL to restore access.",
       ),
     ).toBeVisible();
+    await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
+      "Yes",
+    );
+    await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
+      "Please save this note.",
+    );
     await expect(
-      revokedGuestRow.getByTestId(`guest-rsvp-status-${guestSlug}`),
-    ).toHaveText("Yes");
-    await expect(
-      revokedGuestRow.getByTestId(`guest-rsvp-note-${guestSlug}`),
-    ).toHaveText("Please save this note.");
-    await expect(
-      revokedGuestRow.getByRole("button", { name: "Revoke Invitation" }),
+      page.getByRole("button", { name: "Revoke Invitation" }),
     ).toHaveCount(0);
 
     await page.goto(newInvitationUrl);
@@ -336,16 +351,13 @@ test.describe("Admin View", () => {
     const privateNote = `Private RSVP note ${runId}`;
 
     const createGuest = async (displayName: string) => {
-      await page.goto("/admin");
+      await page.goto("/admin?tab=guests");
       await page.locator("#newGuestDisplayName").fill(displayName);
       await page.getByRole("button", { name: "Create Guest" }).click();
       await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
 
-      return page
-        .getByRole("textbox", {
-          name: `${displayName} Invitation URL`,
-        })
-        .inputValue();
+      await openGuestDetail(page, displayName);
+      return getInvitationUrlFromGuestDetail(page, displayName);
     };
 
     const submitResponse = async (
@@ -364,6 +376,7 @@ test.describe("Admin View", () => {
     await page.getByLabel("Password").fill("test-admin-password");
     await page.getByRole("button", { name: "Log in" }).click();
 
+    await page.getByRole("tab", { name: "Party settings" }).click();
     await page.getByLabel("Title").fill(`Confirmed List Party ${runId}`);
     await page.getByLabel("Date and time").fill("2026-08-15T18:00");
     await page
