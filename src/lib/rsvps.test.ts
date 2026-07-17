@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { SqlExecutor } from "@/lib/admin";
 import {
+  LATE_RESPONSE_ACCEPTED_MESSAGE,
+  LATE_RESPONSE_DECLINED_MESSAGE,
+} from "@/lib/rsvp-policy";
+import {
   getGuestResponseSummary,
   getGuestRsvp,
   listConfirmedAttendees,
@@ -28,7 +32,7 @@ describe("RSVP persistence", () => {
   });
 
   test("saves a Yes RSVP with an optional admin-only note", async () => {
-    const { calls, sql } = createSqlStub([[]]);
+    const { calls, sql } = createSqlStub([[], []]);
 
     await expect(
       saveGuestRsvp(sql, {
@@ -36,11 +40,17 @@ describe("RSVP persistence", () => {
         answer: "yes",
         note: "  Can't wait.  ",
         now: new Date("2026-08-14T21:58:00.000Z"),
+        partyStartsAt: new Date("2026-08-15T16:00:00.000Z"),
+        lateResponsePolicy: "decline_late",
       }),
-    ).resolves.toEqual({ status: "yes", isLate: false });
+    ).resolves.toEqual({
+      allowed: true,
+      rsvp: { status: "yes", isLate: false },
+      message: undefined,
+    });
 
-    expect(calls[0]?.text).toContain("INSERT INTO rsvps");
-    expect(calls[0]?.values).toEqual([
+    expect(calls[1]?.text).toContain("INSERT INTO rsvps");
+    expect(calls[1]?.values).toEqual([
       "guest-id",
       "yes",
       false,
@@ -48,6 +58,88 @@ describe("RSVP persistence", () => {
       new Date("2026-08-14T21:58:00.000Z"),
       new Date("2026-08-14T21:58:00.000Z"),
     ]);
+  });
+
+  test("saves an accepted post-cutoff Yes RSVP as Yes late", async () => {
+    const { calls, sql } = createSqlStub([[], []]);
+
+    await expect(
+      saveGuestRsvp(sql, {
+        guestId: "guest-id",
+        answer: "yes",
+        note: "I can still make it.",
+        now: new Date("2026-08-14T22:00:00.000Z"),
+        partyStartsAt: new Date("2026-08-15T16:00:00.000Z"),
+        lateResponsePolicy: "accept_late",
+      }),
+    ).resolves.toEqual({
+      allowed: true,
+      rsvp: { status: "yes", isLate: true },
+      message: LATE_RESPONSE_ACCEPTED_MESSAGE,
+    });
+
+    expect(calls[1]?.text).toContain("INSERT INTO rsvps");
+    expect(calls[1]?.values).toEqual([
+      "guest-id",
+      "yes",
+      true,
+      "I can still make it.",
+      new Date("2026-08-14T22:00:00.000Z"),
+      new Date("2026-08-14T22:00:00.000Z"),
+    ]);
+  });
+
+  test("saves an accepted post-cutoff No-to-Yes RSVP as Yes late", async () => {
+    const { calls, sql } = createSqlStub([
+      [{ status: "no", is_late: false }],
+      [],
+    ]);
+
+    await expect(
+      saveGuestRsvp(sql, {
+        guestId: "guest-id",
+        answer: "yes",
+        note: "Plans changed again.",
+        now: new Date("2026-08-14T22:00:00.000Z"),
+        partyStartsAt: new Date("2026-08-15T16:00:00.000Z"),
+        lateResponsePolicy: "accept_late",
+      }),
+    ).resolves.toEqual({
+      allowed: true,
+      rsvp: { status: "yes", isLate: true },
+      message: LATE_RESPONSE_ACCEPTED_MESSAGE,
+    });
+
+    expect(calls[1]?.text).toContain("INSERT INTO rsvps");
+    expect(calls[1]?.values).toEqual([
+      "guest-id",
+      "yes",
+      true,
+      "Plans changed again.",
+      new Date("2026-08-14T22:00:00.000Z"),
+      new Date("2026-08-14T22:00:00.000Z"),
+    ]);
+  });
+
+  test("declines post-cutoff Yes attempts without saving an RSVP note", async () => {
+    const { calls, sql } = createSqlStub([[]]);
+
+    await expect(
+      saveGuestRsvp(sql, {
+        guestId: "guest-id",
+        answer: "yes",
+        note: "Please save this late note.",
+        now: new Date("2026-08-14T22:00:00.000Z"),
+        partyStartsAt: new Date("2026-08-15T16:00:00.000Z"),
+        lateResponsePolicy: "decline_late",
+      }),
+    ).resolves.toEqual({
+      allowed: false,
+      message: LATE_RESPONSE_DECLINED_MESSAGE,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.text).toContain("SELECT status, is_late");
   });
 
   test("lists admin-visible statuses and summary counts", async () => {

@@ -1,6 +1,11 @@
 import type { SqlExecutor } from "@/lib/admin";
 import { createInvitationUrl } from "@/lib/invitations";
-import type { RsvpAnswer, RsvpState } from "@/lib/rsvp-policy";
+import {
+  evaluateRsvpChange,
+  type LateResponsePolicy,
+  type RsvpAnswer,
+  type RsvpState,
+} from "@/lib/rsvp-policy";
 
 export type GuestWithResponse = {
   id: string;
@@ -22,6 +27,17 @@ export type GuestResponseSummary = {
 export type ConfirmedAttendee = {
   displayName: string;
 };
+
+export type SaveGuestRsvpResult =
+  | {
+      allowed: true;
+      rsvp: Exclude<RsvpState, { status: "not_responded" }>;
+      message?: string;
+    }
+  | {
+      allowed: false;
+      message: string;
+    };
 
 type RsvpRow = {
   status: RsvpAnswer;
@@ -71,10 +87,24 @@ export async function saveGuestRsvp(
     answer: RsvpAnswer;
     note: string;
     now?: Date;
+    partyStartsAt: Date;
+    lateResponsePolicy: LateResponsePolicy;
   },
-): Promise<Exclude<RsvpState, { status: "not_responded" }>> {
+): Promise<SaveGuestRsvpResult> {
   const now = input.now ?? new Date();
-  const next = toBasicRsvpState(input.answer);
+  const decision = evaluateRsvpChange({
+    current: await getGuestRsvp(sql, input.guestId),
+    requestedAnswer: input.answer,
+    now,
+    partyStartsAt: input.partyStartsAt,
+    lateResponsePolicy: input.lateResponsePolicy,
+  });
+
+  if (!decision.allowed) {
+    return decision;
+  }
+
+  const next = decision.next;
 
   await sql`
     INSERT INTO rsvps (guest_id, status, is_late, note, responded_at, updated_at)
@@ -93,7 +123,7 @@ export async function saveGuestRsvp(
         updated_at = EXCLUDED.updated_at
   `;
 
-  return next;
+  return { allowed: true, rsvp: next, message: decision.message };
 }
 
 export async function listConfirmedAttendees(
@@ -189,16 +219,6 @@ function mapRsvpRow(row: RsvpRow | undefined): RsvpState {
 
 function normalizeNote(note: string) {
   return note.trim();
-}
-
-function toBasicRsvpState(
-  answer: RsvpAnswer,
-): Exclude<RsvpState, { status: "not_responded" }> {
-  if (answer === "yes") {
-    return { status: "yes", isLate: false };
-  }
-
-  return { status: "no" };
 }
 
 function toCount(value: number | string | undefined) {

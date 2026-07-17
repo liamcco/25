@@ -27,6 +27,9 @@ export type RsvpChangeDecision =
     };
 
 const STOCKHOLM_TIME_ZONE = "Europe/Stockholm";
+export const LATE_RESPONSE_ACCEPTED_MESSAGE = "You can still drop by.";
+export const LATE_RESPONSE_DECLINED_MESSAGE =
+  "There are too many guests, sorry.";
 
 type StockholmDateParts = {
   year: number;
@@ -74,14 +77,14 @@ export function evaluateRsvpChange(
   if (request.lateResponsePolicy === "accept_late") {
     return {
       allowed: true,
-      message: "You can still drop by.",
+      message: LATE_RESPONSE_ACCEPTED_MESSAGE,
       next: { status: "yes", isLate: true },
     };
   }
 
   return {
     allowed: false,
-    message: "There are too many guests, sorry.",
+    message: LATE_RESPONSE_DECLINED_MESSAGE,
   };
 }
 

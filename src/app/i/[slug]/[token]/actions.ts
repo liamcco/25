@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createSql } from "@/lib/admin";
+import { createSql, getOrCreatePartySettings } from "@/lib/admin";
 import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
@@ -24,13 +24,20 @@ export async function submitRsvp(token: string, formData: FormData) {
     redirect(`/i/invalid/${token}`);
   }
 
-  await saveGuestRsvp(sql, {
+  const settings = await getOrCreatePartySettings(sql);
+  const saveDecision = await saveGuestRsvp(sql, {
     guestId: access.guest.id,
     answer,
     note,
+    partyStartsAt: settings.startsAt,
+    lateResponsePolicy: settings.lateResponsePolicy,
   });
 
   revalidatePath(access.invitationUrl);
+  if (!saveDecision.allowed) {
+    redirect(`${access.invitationUrl}?rsvpDeclinedLate=1`);
+  }
+
   redirect(`${access.invitationUrl}?rsvpSaved=1`);
 }
 

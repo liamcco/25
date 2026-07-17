@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { submitRsvp } from "@/app/i/[slug]/[token]/actions";
+import {
+  RsvpFeedback,
+  type RsvpFeedbackSearchParams,
+} from "@/app/i/[slug]/[token]/rsvp-feedback";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +21,7 @@ type InvitationPageProps = {
     slug: string;
     token: string;
   }>;
-  searchParams?: Promise<{
-    rsvpSaved?: string;
-  }>;
+  searchParams?: Promise<RsvpFeedbackSearchParams>;
 };
 
 export default async function InvitationPage({
@@ -82,12 +84,7 @@ export default async function InvitationPage({
           </h1>
         </header>
 
-        {feedback?.rsvpSaved === "1" ? (
-          <Alert>
-            <AlertTitle>Saved</AlertTitle>
-            <AlertDescription>Your RSVP has been saved.</AlertDescription>
-          </Alert>
-        ) : null}
+        <RsvpFeedback feedback={feedback} />
 
         <Card>
           <CardHeader>
