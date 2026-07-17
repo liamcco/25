@@ -1,5 +1,6 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { LATE_RESPONSE_DECLINED_MESSAGE } from "@/lib/rsvp-policy";
+import { RsvpToast } from "./rsvp-toast";
 
 export type RsvpFeedbackSearchParams = {
   rsvpDeclinedLate?: string;
@@ -13,12 +14,7 @@ export function RsvpFeedback({
 }) {
   return (
     <>
-      {feedback?.rsvpSaved === "1" ? (
-        <Alert>
-          <AlertTitle>Saved</AlertTitle>
-          <AlertDescription>Your RSVP has been saved.</AlertDescription>
-        </Alert>
-      ) : null}
+      <RsvpToast feedback={feedback} />
 
       {feedback?.rsvpDeclinedLate === "1" ? (
         <Alert>

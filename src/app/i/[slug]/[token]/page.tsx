@@ -92,13 +92,11 @@ export default async function InvitationPage({
             ? "We'll miss you. If plans change, you can still update your RSVP here."
             : "You are warmly invited to celebrate with us. I would genuinely love to have you there."
         }
-        rsvp={rsvp}
-        settings={settings}
       />
 
       <RsvpFeedback feedback={feedback} />
-      <PartyDetailsCard settings={settings} />
       <RsvpFormCard currentRsvp={rsvp} token={token} />
+      <PartyDetailsCard settings={settings} />
     </InvitationShell>
   );
 }

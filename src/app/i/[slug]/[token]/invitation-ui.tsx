@@ -1,22 +1,15 @@
 import {
   CalendarDays,
-  CheckCircle2,
   LockKeyhole,
   MapPin,
-  Send,
   Shirt,
   Sparkles,
-  Users,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { submitRsvp } from "@/app/i/[slug]/[token]/actions";
-import { PendingSubmitButton } from "@/components/pending-submit-button";
-import { Badge } from "@/components/ui/badge";
+import { RsvpForm } from "@/app/i/[slug]/[token]/rsvp-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import type { PartySettings } from "@/lib/admin";
-import { formatRsvpState, type RsvpState } from "@/lib/rsvp-policy";
-import type { ConfirmedAttendee } from "@/lib/rsvps";
+import type { RsvpState } from "@/lib/rsvp-policy";
 
 type InvitationShellProps = {
   children: ReactNode;
@@ -26,8 +19,6 @@ type InvitationHeaderProps = {
   guestName: string;
   headline: string;
   intro: string;
-  rsvp: RsvpState;
-  settings: PartySettings;
 };
 
 type PartyDetailsCardProps = {
@@ -40,8 +31,7 @@ type RsvpFormCardProps = {
   title?: string;
 };
 
-type ConfirmedInfoCardProps = {
-  attendees: ConfirmedAttendee[];
+type ConfirmedDetailsCardProps = {
   confirmedInfo: string;
 };
 
@@ -59,8 +49,6 @@ export function InvitationHeader({
   guestName,
   headline,
   intro,
-  rsvp,
-  settings,
 }: InvitationHeaderProps) {
   return (
     <header className="rounded-lg border bg-card px-5 py-6 shadow-sm sm:px-7 sm:py-8">
@@ -73,17 +61,6 @@ export function InvitationHeader({
       <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
         {intro}
       </p>
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Badge variant="secondary">
-          <CalendarDays /> {formatPartyDate(settings.startsAt)}
-        </Badge>
-        <Badge variant="secondary">
-          <MapPin /> {formatLocationSummary(settings.location)}
-        </Badge>
-        <Badge variant={rsvp.status === "yes" ? "default" : "outline"}>
-          <CheckCircle2 /> RSVP: {formatRsvpState(rsvp)}
-        </Badge>
-      </div>
     </header>
   );
 }
@@ -125,70 +102,21 @@ export function RsvpFormCard({
   title = "RSVP",
   token,
 }: RsvpFormCardProps) {
-  const submitRsvpForToken = submitRsvp.bind(null, token);
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-5">
-        <p className="text-base font-medium">
-          Current RSVP: {formatRsvpState(currentRsvp)}
-        </p>
-        <form action={submitRsvpForToken} className="grid gap-4">
-          <fieldset className="grid gap-3">
-            <legend className="text-sm font-medium text-muted-foreground">
-              Your response
-            </legend>
-            <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/60 has-checked:border-primary has-checked:bg-primary/5">
-              <input
-                type="radio"
-                name="answer"
-                value="yes"
-                defaultChecked={currentRsvp.status === "yes"}
-                required
-                className="accent-primary"
-              />
-              Yes, I will attend
-            </label>
-            <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/60 has-checked:border-primary has-checked:bg-primary/5">
-              <input
-                type="radio"
-                name="answer"
-                value="no"
-                defaultChecked={currentRsvp.status === "no"}
-                required
-                className="accent-primary"
-              />
-              No, I cannot attend
-            </label>
-          </fieldset>
-          <label className="grid gap-2 text-sm font-medium" htmlFor="note">
-            Note to host
-            <Textarea
-              id="note"
-              name="note"
-              placeholder="Optional"
-              className="font-normal"
-            />
-          </label>
-          <div>
-            <PendingSubmitButton pendingLabel="Saving RSVP...">
-              <Send />
-              Save RSVP
-            </PendingSubmitButton>
-          </div>
-        </form>
+        <RsvpForm currentRsvp={currentRsvp} token={token} />
       </CardContent>
     </Card>
   );
 }
 
-export function ConfirmedInfoCard({
-  attendees,
+export function ConfirmedDetailsCard({
   confirmedInfo,
-}: ConfirmedInfoCardProps) {
+}: ConfirmedDetailsCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -200,31 +128,6 @@ export function ConfirmedInfoCard({
           label="Confirmed Party Info"
           value={confirmedInfo}
         />
-        <section className="grid gap-3" aria-labelledby="attendee-list">
-          <h2
-            id="attendee-list"
-            className="flex items-center gap-2 text-sm font-medium text-muted-foreground [&_svg]:size-4"
-          >
-            <Users />
-            Attendee List
-          </h2>
-          {attendees.length === 0 ? (
-            <p className="rounded-md border border-dashed px-3 py-4 text-sm text-muted-foreground">
-              No Attendee List entries yet.
-            </p>
-          ) : (
-            <ul className="grid gap-2" data-testid="attendee-list">
-              {attendees.map((attendee, index) => (
-                <li
-                  key={`${attendee.displayName}-${index}`}
-                  className="rounded-md border bg-background px-3 py-2 text-base"
-                >
-                  {attendee.displayName}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </CardContent>
     </Card>
   );
@@ -256,8 +159,4 @@ function formatPartyDate(date: Date) {
     timeStyle: "short",
     timeZone: "Europe/Stockholm",
   }).format(date);
-}
-
-function formatLocationSummary(location: string) {
-  return location.split(/\r?\n/, 1)[0]?.trim() || "Location TBD";
 }

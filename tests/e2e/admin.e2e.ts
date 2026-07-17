@@ -178,13 +178,13 @@ test.describe("Admin View", () => {
     await page.getByRole("button", { name: "Save RSVP" }).click();
 
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("Your RSVP has been saved.")).toBeVisible();
-    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+    await expect(page.getByText("Your choice was saved!")).toBeVisible();
+    await expect(page.getByText("You're on the list")).toBeVisible();
     await expect(page.getByText("Looking forward to it.")).toHaveCount(0);
 
     await page.reload();
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+    await expect(page.getByText("You're on the list")).toBeVisible();
 
     await page.goto("/admin");
     await expect(page.getByTestId("response-count-total-guests")).toHaveText(
@@ -212,10 +212,13 @@ test.describe("Admin View", () => {
     );
 
     await page.goto(invitationUrl);
-    await page.getByLabel("No, I cannot attend").check();
-    await page.getByLabel("Note to host").fill("Plans changed.");
-    await page.getByRole("button", { name: "Save RSVP" }).click();
+    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("button", { name: `Edit ${displayName} RSVP` })
+      .click();
+    await page.getByRole("button", { name: "I am sure" }).click();
     await expect(page).toHaveURL(/\/i\/[^/]+\/[^/]+\?rsvpSaved=1$/);
+    await expect(page.getByText("Your choice was saved!")).toBeVisible();
     await expect(page.getByText("So sorry you can't make it")).toBeVisible();
     await expect(page.getByText("Current RSVP: No")).toBeVisible();
 
@@ -240,9 +243,7 @@ test.describe("Admin View", () => {
       "No",
     );
     await openGuestDetail(page, displayName);
-    await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
-      "Plans changed.",
-    );
+    await expect(page.getByText("No RSVP note yet.")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Save Guest" }).first(),
     ).toBeVisible();
@@ -278,7 +279,7 @@ test.describe("Admin View", () => {
     await page.getByLabel("Note to host").fill("Please save this note.");
     await page.getByRole("button", { name: "Save RSVP" }).click();
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+    await expect(page.getByText("You're on the list")).toBeVisible();
 
     await page.goto("/admin?tab=guests");
     const guestRow = page.getByTestId(`guest-row-${guestSlug}`);
@@ -313,7 +314,7 @@ test.describe("Admin View", () => {
     await page.goto(newInvitationUrl);
     await expect(page).toHaveURL(/\/rsvp-yes$/);
     await expect(page.getByText(`Invitation for ${displayName}`)).toBeVisible();
-    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+    await expect(page.getByText("You're on the list")).toBeVisible();
     await expect(page.getByText("Please save this note.")).toHaveCount(0);
 
     await page.goto(guestDetailUrl);
@@ -375,7 +376,7 @@ test.describe("Admin View", () => {
       await page.getByLabel(answer).check();
       await page.getByLabel("Note to host").fill(note);
       await page.getByRole("button", { name: "Save RSVP" }).click();
-      await expect(page.getByText("Your RSVP has been saved.")).toBeVisible();
+      await expect(page.getByText("Your choice was saved!")).toBeVisible();
       if (answer === "Yes, I will attend") {
         await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
       } else {
@@ -432,9 +433,12 @@ test.describe("Admin View", () => {
 
     await page.goto(adaUrl);
     await expect(page.getByText(confirmedInfo)).toBeVisible();
-    const attendeeItems = page.getByTestId("attendee-list").locator("li");
+    await page.getByRole("tab", { name: "Guest list" }).click();
+    const attendeeItems = page.getByTestId("attendee-list").getByRole("row");
     const attendeeByName = (name: string) =>
-      page.getByTestId("attendee-list").locator("li").filter({ hasText: name });
+      page.getByTestId("attendee-list").getByRole("row").filter({
+        hasText: name,
+      });
     await expect(attendeeByName(adaName)).toHaveText(adaName);
     await expect(attendeeByName(monaName)).toHaveText(monaName);
     await expect(attendeeByName(zeldaName)).toHaveText(zeldaName);
@@ -448,10 +452,15 @@ test.describe("Admin View", () => {
       attendeeNames.indexOf(zeldaName),
     );
 
-    await submitResponse(adaUrl, "No, I cannot attend");
+    await page.goto(adaUrl);
+    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page.getByRole("button", { name: `Edit ${adaName} RSVP` }).click();
+    await page.getByRole("button", { name: "I am sure" }).click();
+    await expect(page).toHaveURL(/\/i\/[^/]+\/[^/]+\?rsvpSaved=1$/);
 
     await page.goto(monaUrl);
     await expect(page.getByText(confirmedInfo)).toBeVisible();
+    await page.getByRole("tab", { name: "Guest list" }).click();
     await expect(attendeeByName(adaName)).toHaveCount(0);
     await expect(attendeeByName(monaName)).toHaveText(monaName);
     await expect(attendeeByName(zeldaName)).toHaveText(zeldaName);
