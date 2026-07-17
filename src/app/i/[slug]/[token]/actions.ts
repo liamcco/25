@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { createRsvpYesUrl } from "@/app/i/[slug]/[token]/invitation-routes";
 import { createSql, getOrCreatePartySettings } from "@/lib/admin";
 import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
@@ -33,9 +34,16 @@ export async function submitRsvp(token: string, formData: FormData) {
     lateResponsePolicy: settings.lateResponsePolicy,
   });
 
+  const rsvpYesUrl = createRsvpYesUrl(access.invitationUrl);
+
   revalidatePath(access.invitationUrl);
+  revalidatePath(rsvpYesUrl);
   if (!saveDecision.allowed) {
     redirect(`${access.invitationUrl}?rsvpDeclinedLate=1`);
+  }
+
+  if (saveDecision.rsvp.status === "yes") {
+    redirect(`${rsvpYesUrl}?rsvpSaved=1`);
   }
 
   redirect(`${access.invitationUrl}?rsvpSaved=1`);
