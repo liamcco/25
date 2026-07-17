@@ -1,0 +1,3 @@
+# Invitation Links as Guest Access
+
+Guest-facing access uses a unique invitation link for exactly one guest rather than a user account login. Invitation URLs use `/i/<guest-name-slug>/<token>` so links are identifiable when the host sends them, but the token is the only authoritative credential; if the slug is wrong or stale, the app should redirect to the canonical slug for that token. Possession of the active link is enough to RSVP and view information available to that invitation, with confirmed-only party information unlocked only after a Yes RSVP; this keeps the guest flow low-friction while still letting the host revoke/regenerate links from the admin view.
