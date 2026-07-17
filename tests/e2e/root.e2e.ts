@@ -6,6 +6,11 @@ test("startsidan visar inga festdetaljer", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "Privat inbjudan krävs." }),
   ).toBeVisible();
+  await expect(page).toHaveTitle("Liam 25! - Inbjudan!");
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    "content",
+    "Liam 25! - Inbjudan!",
+  );
   await expect(page.getByText("Next.js")).toHaveCount(0);
   await expect(page.getByText("fest", { exact: false })).toHaveCount(0);
 });

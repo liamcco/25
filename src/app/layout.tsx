@@ -3,8 +3,16 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Privat inbjudan",
-  description: "Privat inbjudan krävs.",
+  title: "Liam 25! - Inbjudan!",
+  description: "Liam 25! - Inbjudan!",
+  openGraph: {
+    title: "Liam 25! - Inbjudan!",
+    description: "Liam 25! - Inbjudan!",
+  },
+  twitter: {
+    title: "Liam 25! - Inbjudan!",
+    description: "Liam 25! - Inbjudan!",
+  },
 };
 
 export default function RootLayout({
