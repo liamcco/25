@@ -23,6 +23,10 @@ describe("persistence bootstrap", () => {
     for (const table of BOOTSTRAP_SCHEMA_TABLES) {
       expect(initialSchemaSql).toContain(`CREATE TABLE IF NOT EXISTS ${table}`);
     }
+    expect(initialSchemaSql).toContain("invitation_sent boolean");
+    expect(initialSchemaSql).toContain(
+      "ADD COLUMN IF NOT EXISTS invitation_sent",
+    );
   });
 
   test("splits the schema into single statements for Neon prepared execution", async () => {

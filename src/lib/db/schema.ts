@@ -19,9 +19,13 @@ CREATE TABLE IF NOT EXISTS guests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   display_name text NOT NULL CHECK (length(trim(display_name)) > 0),
   guest_name_slug text NOT NULL CHECK (length(trim(guest_name_slug)) > 0),
+  invitation_sent boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE guests
+  ADD COLUMN IF NOT EXISTS invitation_sent boolean NOT NULL DEFAULT false;
 
 CREATE UNIQUE INDEX IF NOT EXISTS guests_guest_name_slug_key
   ON guests (guest_name_slug);

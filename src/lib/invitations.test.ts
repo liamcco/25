@@ -8,6 +8,7 @@ import {
   regenerateGuestInvitation,
   revokeGuestInvitation,
   updateGuestDisplayName,
+  updateGuestInvitationSent,
 } from "@/lib/invitations";
 
 function createSqlStub(results: unknown[][] = []) {
@@ -34,6 +35,7 @@ describe("Guest Invitation URLs", () => {
           id: "guest-id",
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace",
+          invitation_sent: false,
           token: "token-value",
           is_active: true,
         },
@@ -49,6 +51,7 @@ describe("Guest Invitation URLs", () => {
       id: "guest-id",
       displayName: "Ada Lovelace",
       guestNameSlug: "ada-lovelace",
+      invitationSent: false,
       invitationUrl: "https://example.com/i/ada-lovelace/token-value",
     });
     expect(calls[1]?.text).toContain("INSERT INTO guests");
@@ -66,6 +69,7 @@ describe("Guest Invitation URLs", () => {
           id: "guest-id",
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace-2",
+          invitation_sent: false,
           token: "token-value",
         },
       ],
@@ -90,6 +94,7 @@ describe("Guest Invitation URLs", () => {
           id: "guest-id",
           display_name: "Grace Hopper",
           guest_name_slug: "grace-hopper",
+          invitation_sent: false,
         },
       ],
       [{ token: "token-value" }],
@@ -111,6 +116,19 @@ describe("Guest Invitation URLs", () => {
       "grace-hopper",
       "guest-id",
     ]);
+  });
+
+  test("marks whether an invitation has been sent to a Guest", async () => {
+    const { calls, sql } = createSqlStub([[{ id: "guest-id" }]]);
+
+    await updateGuestInvitationSent(sql, {
+      guestId: "guest-id",
+      invitationSent: true,
+    });
+
+    expect(calls[0]?.text).toContain("UPDATE guests");
+    expect(calls[0]?.text).toContain("invitation_sent");
+    expect(calls[0]?.values).toEqual([true, "guest-id"]);
   });
 
   test("resolves active access by authoritative token", async () => {
@@ -172,6 +190,7 @@ describe("Guest Invitation URLs", () => {
           id: "guest-id",
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace",
+          invitation_sent: false,
           token: "new-token-value",
         },
       ],
@@ -186,6 +205,7 @@ describe("Guest Invitation URLs", () => {
       id: "guest-id",
       displayName: "Ada Lovelace",
       guestNameSlug: "ada-lovelace",
+      invitationSent: false,
       invitationUrl: "https://example.com/i/ada-lovelace/new-token-value",
     });
 
@@ -221,6 +241,7 @@ describe("Guest Invitation URLs", () => {
           id: "guest-id",
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace",
+          invitation_sent: true,
           token: "token-value",
         },
       ],
@@ -231,6 +252,7 @@ describe("Guest Invitation URLs", () => {
         id: "guest-id",
         displayName: "Ada Lovelace",
         guestNameSlug: "ada-lovelace",
+        invitationSent: true,
         invitationUrl: "https://example.com/i/ada-lovelace/token-value",
       },
     ]);

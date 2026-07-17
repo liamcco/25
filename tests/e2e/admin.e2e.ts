@@ -117,6 +117,37 @@ test.describe("Adminvy", () => {
       .click();
 
     await expect(page.getByText("Inbjudningslänken är redo")).toBeVisible();
+    let invitationSentCheckbox = page.getByRole("checkbox", {
+      name: `Inbjudan skickad till ${displayName}`,
+    });
+    await expect(invitationSentCheckbox).not.toBeChecked();
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().includes("/admin"),
+      ),
+      invitationSentCheckbox.check(),
+    ]);
+    await page.reload();
+    invitationSentCheckbox = page.getByRole("checkbox", {
+      name: `Inbjudan skickad till ${displayName}`,
+    });
+    await expect(invitationSentCheckbox).toBeChecked();
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().includes("/admin"),
+      ),
+      invitationSentCheckbox.uncheck(),
+    ]);
+    await page.reload();
+    await expect(
+      page.getByRole("checkbox", {
+        name: `Inbjudan skickad till ${displayName}`,
+      }),
+    ).not.toBeChecked();
     await openGuestDetail(page, displayName);
     const guestDetailUrl = page.url();
     const invitationUrl = await getInvitationUrlFromGuestDetail(

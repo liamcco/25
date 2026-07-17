@@ -1,5 +1,20 @@
+import {
+  Ban,
+  CheckCircle2,
+  ClipboardList,
+  Link2,
+  Pencil,
+  RefreshCw,
+  Save,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createGuest, savePartySettings } from "@/app/admin/actions";
 import { InvitationCopyButton } from "@/components/invitation-copy-button";
+import { InvitationSentCheckbox } from "@/components/invitation-sent-checkbox";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -40,20 +55,6 @@ import { formatRsvpState } from "@/lib/rsvp-policy";
 import { getGuestResponseSummary, listGuestsWithResponses } from "@/lib/rsvps";
 import { formatStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 import { cn } from "@/lib/utils";
-import {
-  Ban,
-  CheckCircle2,
-  ClipboardList,
-  Link2,
-  Pencil,
-  RefreshCw,
-  Save,
-  Settings,
-  UserPlus,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 
 type AdminPageProps = {
   searchParams?: Promise<AdminStatusParams>;
@@ -201,6 +202,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Namn</TableHead>
+                          <TableHead className="w-28">Skickad</TableHead>
                           <TableHead>OSA-status</TableHead>
                           <TableHead className="w-32">Kopiera länk</TableHead>
                           <TableHead className="w-32">Ändra</TableHead>
@@ -214,6 +216,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           >
                             <TableCell className="font-medium">
                               {guest.displayName}
+                            </TableCell>
+                            <TableCell>
+                              <InvitationSentCheckbox
+                                defaultChecked={guest.invitationSent}
+                                guestId={guest.id}
+                                guestName={guest.displayName}
+                              />
                             </TableCell>
                             <TableCell>
                               <Badge

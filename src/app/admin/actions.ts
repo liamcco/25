@@ -17,6 +17,7 @@ import {
   regenerateGuestInvitation,
   revokeGuestInvitation,
   updateGuestDisplayName,
+  updateGuestInvitationSent,
 } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
 import type { LateResponsePolicy } from "@/lib/rsvp-policy";
@@ -95,6 +96,21 @@ export async function saveGuestDisplayName(formData: FormData) {
 
   revalidateAdminGuest(guestId);
   redirect(getAdminRedirectPath(formData, "/admin?guestSaved=1"));
+}
+
+export async function setGuestInvitationSent(formData: FormData) {
+  if (!(await getCurrentAdminSession())) {
+    redirect("/admin/login");
+  }
+
+  const guestId = getRequiredString(formData, "guestId");
+
+  await updateGuestInvitationSent(createSql(), {
+    guestId,
+    invitationSent: formData.has("invitationSent"),
+  });
+
+  revalidateAdminGuest(guestId);
 }
 
 export async function regenerateInvitation(formData: FormData) {

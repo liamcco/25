@@ -5,6 +5,7 @@ export type Guest = {
   id: string;
   displayName: string;
   guestNameSlug: string;
+  invitationSent: boolean;
   invitationUrl: string;
 };
 
@@ -25,6 +26,7 @@ type GuestRow = {
   id: string;
   display_name: string;
   guest_name_slug: string;
+  invitation_sent: boolean;
   token: string;
 };
 
@@ -62,7 +64,11 @@ export function createInvitationUrl(
 
 export async function listGuests(sql: SqlExecutor, origin: string) {
   const rows = (await sql`
-    SELECT guests.id, guests.display_name, guests.guest_name_slug, invitations.token
+    SELECT guests.id,
+           guests.display_name,
+           guests.guest_name_slug,
+           guests.invitation_sent,
+           invitations.token
     FROM guests
     JOIN invitations ON invitations.guest_id = guests.id
     WHERE invitations.is_active = true
@@ -87,7 +93,7 @@ export async function createGuestWithInvitation(
     WITH new_guest AS (
       INSERT INTO guests (display_name, guest_name_slug)
       VALUES (${displayName}, ${guestNameSlug})
-      RETURNING id, display_name, guest_name_slug
+      RETURNING id, display_name, guest_name_slug, invitation_sent
     ),
     new_invitation AS (
       INSERT INTO invitations (guest_id, token, token_hash, is_active)
@@ -95,7 +101,11 @@ export async function createGuestWithInvitation(
       FROM new_guest
       RETURNING guest_id, token
     )
-    SELECT new_guest.id, new_guest.display_name, new_guest.guest_name_slug, new_invitation.token
+    SELECT new_guest.id,
+           new_guest.display_name,
+           new_guest.guest_name_slug,
+           new_guest.invitation_sent,
+           new_invitation.token
     FROM new_guest
     JOIN new_invitation ON new_invitation.guest_id = new_guest.id
   `) as GuestRow[];
@@ -120,7 +130,7 @@ export async function updateGuestDisplayName(
         guest_name_slug = ${guestNameSlug},
         updated_at = now()
     WHERE id = ${input.guestId}
-    RETURNING id, display_name, guest_name_slug
+    RETURNING id, display_name, guest_name_slug, invitation_sent
   `) as Array<Omit<GuestRow, "token">>;
 
   if (!rows[0]) {
@@ -145,6 +155,23 @@ export async function updateGuestDisplayName(
   );
 }
 
+export async function updateGuestInvitationSent(
+  sql: SqlExecutor,
+  input: { guestId: string; invitationSent: boolean },
+) {
+  const rows = (await sql`
+    UPDATE guests
+    SET invitation_sent = ${input.invitationSent},
+        updated_at = now()
+    WHERE id = ${input.guestId}
+    RETURNING id
+  `) as Array<{ id: string }>;
+
+  if (!rows[0]) {
+    throw new Error("Guest not found");
+  }
+}
+
 export async function regenerateGuestInvitation(
   sql: SqlExecutor,
   input: { guestId: string; origin: string },
@@ -162,7 +189,7 @@ export async function regenerateGuestInvitation(
       WHERE invitations.guest_id = guests.id
         AND invitations.guest_id = ${input.guestId}
         AND invitations.is_active = true
-      RETURNING guests.id, guests.display_name, guests.guest_name_slug, invitations.token
+      RETURNING guests.id, guests.display_name, guests.guest_name_slug, guests.invitation_sent, invitations.token
     ),
     inserted_invitation AS (
       INSERT INTO invitations (guest_id, token, token_hash, is_active)
@@ -172,10 +199,14 @@ export async function regenerateGuestInvitation(
         AND NOT EXISTS (SELECT 1 FROM updated_invitation)
       RETURNING guest_id, token
     )
-    SELECT id, display_name, guest_name_slug, token
+    SELECT id, display_name, guest_name_slug, invitation_sent, token
     FROM updated_invitation
     UNION ALL
-    SELECT guests.id, guests.display_name, guests.guest_name_slug, inserted_invitation.token
+    SELECT guests.id,
+           guests.display_name,
+           guests.guest_name_slug,
+           guests.invitation_sent,
+           inserted_invitation.token
     FROM guests
     JOIN inserted_invitation ON inserted_invitation.guest_id = guests.id
   `) as GuestRow[];
@@ -281,6 +312,7 @@ function mapGuestRow(row: GuestRow, origin: string): Guest {
     id: row.id,
     displayName: row.display_name,
     guestNameSlug: row.guest_name_slug,
+    invitationSent: row.invitation_sent,
     invitationUrl: createInvitationUrl(origin, row.guest_name_slug, row.token),
   };
 }

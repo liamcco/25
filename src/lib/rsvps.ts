@@ -11,6 +11,7 @@ export type GuestWithResponse = {
   id: string;
   displayName: string;
   guestNameSlug: string;
+  invitationSent: boolean;
   invitationUrl: string | null;
   rsvp: RsvpState;
   rsvpNote: string;
@@ -52,6 +53,7 @@ type GuestWithResponseRow = {
   id: string;
   display_name: string;
   guest_name_slug: string;
+  invitation_sent: boolean;
   token: string | null;
   rsvp_status: RsvpAnswer | null;
   rsvp_is_late: boolean | null;
@@ -150,6 +152,7 @@ export async function listGuestsWithResponses(
     SELECT guests.id,
            guests.display_name,
            guests.guest_name_slug,
+           guests.invitation_sent,
            active_invitation.token,
            rsvps.status AS rsvp_status,
            rsvps.is_late AS rsvp_is_late,
@@ -170,6 +173,7 @@ export async function listGuestsWithResponses(
     id: row.id,
     displayName: row.display_name,
     guestNameSlug: row.guest_name_slug,
+    invitationSent: row.invitation_sent,
     invitationUrl: row.token
       ? createInvitationUrl(origin, row.guest_name_slug, row.token)
       : null,
