@@ -1,3 +1,14 @@
+import {
+  Ban,
+  CheckCircle2,
+  ClipboardList,
+  Link2,
+  RefreshCw,
+  Save,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import {
   createGuest,
@@ -7,8 +18,8 @@ import {
   savePartySettings,
 } from "@/app/admin/actions";
 import { InvitationUrlActions } from "@/components/invitation-url-actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -37,13 +48,15 @@ import { getGuestResponseSummary, listGuestsWithResponses } from "@/lib/rsvps";
 import { formatStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 
 type AdminPageProps = {
-  searchParams?: Promise<{
-    guestCreated?: string;
-    guestSaved?: string;
-    invitationRegenerated?: string;
-    invitationRevoked?: string;
-    saved?: string;
-  }>;
+  searchParams?: Promise<AdminStatusParams>;
+};
+
+type AdminStatusParams = {
+  guestCreated?: string;
+  guestSaved?: string;
+  invitationRegenerated?: string;
+  invitationRevoked?: string;
+  saved?: string;
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -61,59 +74,31 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   ]);
 
   return (
-    <main className="min-h-dvh bg-background px-6 py-8 text-foreground">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-        <header className="flex flex-col gap-2">
-          <p className="text-sm font-medium text-muted-foreground">
-            Admin View
+    <main className="min-h-dvh bg-muted/30 px-4 py-6 text-foreground sm:px-6 sm:py-8">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              Admin View
+            </p>
+            <h1 className="text-3xl font-semibold tracking-normal">
+              Party Settings
+            </h1>
+          </div>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Manage invitation content, Guests, Invitation URLs, and RSVP status
+            from one host-only view.
           </p>
-          <h1 className="text-3xl font-semibold tracking-normal">
-            Party Settings
-          </h1>
         </header>
 
-        {params?.saved === "1" ? (
-          <Alert>
-            <AlertTitle>Saved</AlertTitle>
-            <AlertDescription>Party Settings saved.</AlertDescription>
-          </Alert>
-        ) : null}
-        {params?.guestCreated === "1" ? (
-          <Alert>
-            <AlertTitle>Guest created</AlertTitle>
-            <AlertDescription>
-              The Invitation URL is ready to copy or open.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {params?.guestSaved === "1" ? (
-          <Alert>
-            <AlertTitle>Guest saved</AlertTitle>
-            <AlertDescription>
-              The canonical Invitation URL has been updated.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {params?.invitationRegenerated === "1" ? (
-          <Alert>
-            <AlertTitle>Invitation regenerated</AlertTitle>
-            <AlertDescription>
-              The previous Invitation URL is no longer active.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-        {params?.invitationRevoked === "1" ? (
-          <Alert>
-            <AlertTitle>Invitation revoked</AlertTitle>
-            <AlertDescription>
-              The Invitation URL is no longer active.
-            </AlertDescription>
-          </Alert>
-        ) : null}
+        <AdminStatusAlerts params={params} />
 
         <Card>
           <CardHeader>
-            <CardTitle>Structured invitation content</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="size-4" />
+              Structured invitation content
+            </CardTitle>
             <CardDescription>
               These fields drive the guest-facing invitation and late-response
               behavior.
@@ -128,8 +113,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     id="title"
                     name="title"
                     defaultValue={settings.title}
+                    aria-describedby="title-description"
                     required
                   />
+                  <FieldDescription id="title-description">
+                    Shown as the guest-facing invitation headline.
+                  </FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="startsAt">Date and time</FieldLabel>
@@ -142,7 +131,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     )}
                     required
                   />
-                  <FieldDescription>
+                  <FieldDescription id="startsAt-description">
                     Enter the party start in Europe/Stockholm time.
                   </FieldDescription>
                 </Field>
@@ -154,8 +143,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     id="location"
                     name="location"
                     defaultValue={settings.location}
+                    aria-describedby="location-description"
                     required
                   />
+                  <FieldDescription id="location-description">
+                    Include the address and arrival details guests need before
+                    RSVP.
+                  </FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="dressCode">Dress code</FieldLabel>
@@ -174,8 +168,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     id="publicInfo"
                     name="publicInfo"
                     defaultValue={settings.publicInfo}
+                    aria-describedby="publicInfo-description"
                     required
                   />
+                  <FieldDescription id="publicInfo-description">
+                    Visible to any Guest with an active Invitation URL.
+                  </FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="confirmedInfo">
@@ -185,8 +183,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     id="confirmedInfo"
                     name="confirmedInfo"
                     defaultValue={settings.confirmedInfo}
+                    aria-describedby="confirmedInfo-description"
                     required
                   />
+                  <FieldDescription id="confirmedInfo-description">
+                    Visible only after a Guest answers Yes.
+                  </FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="lateResponsePolicy">
@@ -209,14 +211,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </FieldGroup>
             </CardContent>
             <CardFooter>
-              <Button type="submit">Save Party Settings</Button>
+              <PendingSubmitButton pendingLabel="Saving settings...">
+                <Save />
+                Save Party Settings
+              </PendingSubmitButton>
             </CardFooter>
           </form>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Guests</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="size-4" />
+              Guests
+            </CardTitle>
             <CardDescription>
               Create Guests and manage each active reusable Invitation URL.
             </CardDescription>
@@ -235,6 +243,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <ResponseCount label="Yes late" value={responseSummary.yesLate} />
               <ResponseCount label="No" value={responseSummary.no} />
             </div>
+            {responseSummary.yes +
+              responseSummary.yesLate +
+              responseSummary.no ===
+            0 ? (
+              <EmptyState
+                icon={<ClipboardList />}
+                title="No RSVPs yet"
+                description="Guest responses will appear here after someone saves an RSVP."
+              />
+            ) : null}
 
             <form
               action={createGuest}
@@ -248,20 +266,29 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   id="newGuestDisplayName"
                   name="displayName"
                   placeholder="Ada Lovelace"
+                  aria-describedby="newGuestDisplayName-description"
                   required
                 />
+                <FieldDescription id="newGuestDisplayName-description">
+                  The name shown on this Guest&apos;s Invitation.
+                </FieldDescription>
               </Field>
               <div className="flex items-end">
-                <Button type="submit">Create Guest</Button>
+                <PendingSubmitButton pendingLabel="Creating Guest...">
+                  <UserPlus />
+                  Create Guest
+                </PendingSubmitButton>
               </div>
             </form>
 
             {guests.length === 0 ? (
-              <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                No Guests yet.
-              </p>
+              <EmptyState
+                icon={<Users />}
+                title="No Guests yet"
+                description="Create the first Guest to generate an Invitation URL."
+              />
             ) : (
-              <div className="divide-y rounded-lg border">
+              <div className="divide-y rounded-lg border bg-background">
                 {guests.map((guest) => (
                   <div
                     key={guest.id}
@@ -285,9 +312,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         />
                       </Field>
                       <div className="flex items-end">
-                        <Button type="submit" variant="outline">
+                        <PendingSubmitButton
+                          variant="outline"
+                          pendingLabel="Saving Guest..."
+                        >
+                          <Save />
                           Save Guest
-                        </Button>
+                        </PendingSubmitButton>
                       </div>
                     </form>
                     {guest.invitationUrl ? (
@@ -307,9 +338,13 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     <div className="flex flex-wrap gap-2">
                       <form action={regenerateInvitation}>
                         <input type="hidden" name="guestId" value={guest.id} />
-                        <Button type="submit" variant="outline">
+                        <PendingSubmitButton
+                          variant="outline"
+                          pendingLabel="Regenerating..."
+                        >
+                          <RefreshCw />
                           Regenerate Invitation URL
-                        </Button>
+                        </PendingSubmitButton>
                       </form>
                       {guest.invitationUrl ? (
                         <form action={revokeInvitation}>
@@ -318,15 +353,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             name="guestId"
                             value={guest.id}
                           />
-                          <Button type="submit" variant="destructive">
+                          <PendingSubmitButton
+                            variant="destructive"
+                            pendingLabel="Revoking..."
+                          >
+                            <Ban />
                             Revoke Invitation
-                          </Button>
+                          </PendingSubmitButton>
                         </form>
                       ) : null}
                     </div>
-                    <div className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm">
+                    <div className="grid gap-2 rounded-md bg-muted/50 p-3 text-sm">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">RSVP status</span>
+                        <span className="flex items-center gap-2 font-medium">
+                          <ClipboardList className="size-4 text-muted-foreground" />
+                          RSVP status
+                        </span>
                         <span
                           data-testid={`guest-rsvp-status-${guest.guestNameSlug}`}
                         >
@@ -343,7 +385,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             {guest.rsvpNote}
                           </p>
                         </div>
-                      ) : null}
+                      ) : (
+                        <p className="text-muted-foreground">
+                          No RSVP note yet.
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -356,9 +402,83 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   );
 }
 
+function AdminStatusAlerts({
+  params,
+}: {
+  params: AdminStatusParams | undefined;
+}) {
+  return (
+    <>
+      {params?.saved === "1" ? (
+        <Alert>
+          <CheckCircle2 />
+          <AlertTitle>Saved</AlertTitle>
+          <AlertDescription>Party Settings saved.</AlertDescription>
+        </Alert>
+      ) : null}
+      {params?.guestCreated === "1" ? (
+        <Alert>
+          <Link2 />
+          <AlertTitle>Guest created</AlertTitle>
+          <AlertDescription>
+            The Invitation URL is ready to copy or open.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {params?.guestSaved === "1" ? (
+        <Alert>
+          <CheckCircle2 />
+          <AlertTitle>Guest saved</AlertTitle>
+          <AlertDescription>
+            The canonical Invitation URL has been updated.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {params?.invitationRegenerated === "1" ? (
+        <Alert>
+          <RefreshCw />
+          <AlertTitle>Invitation regenerated</AlertTitle>
+          <AlertDescription>
+            The previous Invitation URL is no longer active.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      {params?.invitationRevoked === "1" ? (
+        <Alert variant="destructive">
+          <Ban />
+          <AlertTitle>Invitation revoked</AlertTitle>
+          <AlertDescription>
+            The Invitation URL is no longer active.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+    </>
+  );
+}
+
+function EmptyState({
+  description,
+  icon,
+  title,
+}: {
+  description: string;
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <div className="grid justify-items-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-center">
+      <div className="rounded-full bg-muted p-2 text-muted-foreground [&_svg]:size-5">
+        {icon}
+      </div>
+      <p className="text-sm font-medium">{title}</p>
+      <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
 function ResponseCount({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border p-3">
+    <div className="rounded-md border bg-background p-3">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <p
         data-testid={`response-count-${label.toLowerCase().replace(/\s+/g, "-")}`}

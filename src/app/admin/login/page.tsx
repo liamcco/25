@@ -1,7 +1,8 @@
+import { LogIn } from "lucide-react";
 import { redirect } from "next/navigation";
 import { loginAdmin } from "@/app/admin/actions";
+import { PendingSubmitButton } from "@/components/pending-submit-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -26,7 +27,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
   const hasInvalidPassword = params?.error === "invalid";
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background px-6 py-10 text-foreground">
+    <main className="flex min-h-dvh items-center justify-center bg-muted/30 px-6 py-10 text-foreground">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Admin login</CardTitle>
@@ -42,6 +43,9 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
                   name="password"
                   type="password"
                   aria-invalid={hasInvalidPassword}
+                  aria-describedby={
+                    hasInvalidPassword ? "password-error" : undefined
+                  }
                   autoComplete="current-password"
                   required
                 />
@@ -50,12 +54,15 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             {hasInvalidPassword ? (
               <Alert variant="destructive">
                 <AlertTitle>Login failed</AlertTitle>
-                <AlertDescription>
+                <AlertDescription id="password-error">
                   The password did not match the configured admin password.
                 </AlertDescription>
               </Alert>
             ) : null}
-            <Button type="submit">Log in</Button>
+            <PendingSubmitButton pendingLabel="Logging in...">
+              <LogIn />
+              Log in
+            </PendingSubmitButton>
           </form>
         </CardContent>
       </Card>
