@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 import { submitRsvp } from "@/app/i/[slug]/[token]/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -37,14 +38,22 @@ export default async function InvitationPage({
 
   if (access.status === "not_found") {
     return (
-      <main className="flex min-h-dvh items-center justify-center bg-background px-6 py-10 text-foreground">
-        <Alert className="max-w-md">
-          <AlertTitle>Invitation unavailable</AlertTitle>
-          <AlertDescription>
-            This invitation link is invalid or no longer active.
-          </AlertDescription>
-        </Alert>
-      </main>
+      <UnavailableInvitation>
+        <AlertTitle>Invitation unavailable</AlertTitle>
+        <AlertDescription>
+          This invitation link is invalid or no longer active.
+        </AlertDescription>
+      </UnavailableInvitation>
+    );
+  }
+
+  if (access.status === "inactive") {
+    return (
+      <UnavailableInvitation>
+        <AlertDescription>
+          This invitation link is no longer active.
+        </AlertDescription>
+      </UnavailableInvitation>
     );
   }
 
@@ -180,6 +189,14 @@ export default async function InvitationPage({
           </Card>
         ) : null}
       </div>
+    </main>
+  );
+}
+
+function UnavailableInvitation({ children }: { children: ReactNode }) {
+  return (
+    <main className="flex min-h-dvh items-center justify-center bg-background px-6 py-10 text-foreground">
+      <Alert className="max-w-md">{children}</Alert>
     </main>
   );
 }

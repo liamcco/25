@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import {
   createGuest,
+  regenerateInvitation,
+  revokeInvitation,
   saveGuestDisplayName,
   savePartySettings,
 } from "@/app/admin/actions";
@@ -38,6 +40,8 @@ type AdminPageProps = {
   searchParams?: Promise<{
     guestCreated?: string;
     guestSaved?: string;
+    invitationRegenerated?: string;
+    invitationRevoked?: string;
     saved?: string;
   }>;
 };
@@ -87,6 +91,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             <AlertTitle>Guest saved</AlertTitle>
             <AlertDescription>
               The canonical Invitation URL has been updated.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {params?.invitationRegenerated === "1" ? (
+          <Alert>
+            <AlertTitle>Invitation regenerated</AlertTitle>
+            <AlertDescription>
+              The previous Invitation URL is no longer active.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {params?.invitationRevoked === "1" ? (
+          <Alert>
+            <AlertTitle>Invitation revoked</AlertTitle>
+            <AlertDescription>
+              The Invitation URL is no longer active.
             </AlertDescription>
           </Alert>
         ) : null}
@@ -243,7 +263,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             ) : (
               <div className="divide-y rounded-lg border">
                 {guests.map((guest) => (
-                  <div key={guest.id} className="flex flex-col gap-4 p-4">
+                  <div
+                    key={guest.id}
+                    data-testid={`guest-row-${guest.guestNameSlug}`}
+                    className="flex flex-col gap-4 p-4"
+                  >
                     <form
                       action={saveGuestDisplayName}
                       className="flex flex-col gap-3 sm:flex-row"
@@ -266,10 +290,40 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         </Button>
                       </div>
                     </form>
-                    <InvitationUrlActions
-                      guestName={guest.displayName}
-                      invitationUrl={guest.invitationUrl}
-                    />
+                    {guest.invitationUrl ? (
+                      <InvitationUrlActions
+                        guestName={guest.displayName}
+                        invitationUrl={guest.invitationUrl}
+                      />
+                    ) : (
+                      <Alert>
+                        <AlertTitle>Invitation revoked</AlertTitle>
+                        <AlertDescription>
+                          Regenerate this Guest&apos;s Invitation URL to restore
+                          access.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <form action={regenerateInvitation}>
+                        <input type="hidden" name="guestId" value={guest.id} />
+                        <Button type="submit" variant="outline">
+                          Regenerate Invitation URL
+                        </Button>
+                      </form>
+                      {guest.invitationUrl ? (
+                        <form action={revokeInvitation}>
+                          <input
+                            type="hidden"
+                            name="guestId"
+                            value={guest.id}
+                          />
+                          <Button type="submit" variant="destructive">
+                            Revoke Invitation
+                          </Button>
+                        </form>
+                      ) : null}
+                    </div>
                     <div className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">RSVP status</span>

@@ -5,6 +5,8 @@ import {
   createGuestWithInvitation,
   getGuestAccessByToken,
   listGuests,
+  regenerateGuestInvitation,
+  revokeGuestInvitation,
   updateGuestDisplayName,
 } from "@/lib/invitations";
 
@@ -33,6 +35,7 @@ describe("Guest Invitation URLs", () => {
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace",
           token: "token-value",
+          is_active: true,
         },
       ],
     ]);
@@ -118,6 +121,7 @@ describe("Guest Invitation URLs", () => {
           display_name: "Ada Lovelace",
           guest_name_slug: "ada-lovelace",
           token: "token-value",
+          is_active: true,
         },
       ],
     ]);
@@ -139,7 +143,18 @@ describe("Guest Invitation URLs", () => {
     expect(calls[0]?.values).toEqual([hashSecret("token-value")]);
   });
 
-  test("does not reveal details for an invalid or inactive token", async () => {
+  test("classifies inactive known tokens without revealing guest details", async () => {
+    const { sql } = createSqlStub([[{ is_active: false }]]);
+
+    await expect(
+      getGuestAccessByToken(sql, {
+        token: "revoked-token",
+        origin: "https://example.com",
+      }),
+    ).resolves.toEqual({ status: "inactive" });
+  });
+
+  test("does not reveal details for an invalid token", async () => {
     const { sql } = createSqlStub([[]]);
 
     await expect(
@@ -148,6 +163,55 @@ describe("Guest Invitation URLs", () => {
         origin: "https://example.com",
       }),
     ).resolves.toEqual({ status: "not_found" });
+  });
+
+  test("regenerates a Guest Invitation URL by rotating the active token", async () => {
+    const { calls, sql } = createSqlStub([
+      [
+        {
+          id: "guest-id",
+          display_name: "Ada Lovelace",
+          guest_name_slug: "ada-lovelace",
+          token: "new-token-value",
+        },
+      ],
+    ]);
+
+    await expect(
+      regenerateGuestInvitation(sql, {
+        guestId: "guest-id",
+        origin: "https://example.com",
+      }),
+    ).resolves.toEqual({
+      id: "guest-id",
+      displayName: "Ada Lovelace",
+      guestNameSlug: "ada-lovelace",
+      invitationUrl: "https://example.com/i/ada-lovelace/new-token-value",
+    });
+
+    expect(calls[0]?.text).toContain("UPDATE invitations");
+    expect(calls[0]?.text).toContain("token_hash");
+    expect(calls[0]?.text).toContain("invitations.is_active = true");
+    expect(calls[0]?.text).toContain("INSERT INTO invitations");
+    expect(calls[0]?.text).toContain("NOT EXISTS");
+    expect(calls[0]?.text).not.toContain("rsvps");
+    expect(calls[0]?.values[0]).toHaveLength(32);
+    expect(calls[0]?.values[1]).toBe(hashSecret(calls[0]?.values[0] as string));
+    expect(calls[0]?.values[2]).toBe("guest-id");
+    expect(calls[0]?.values[3]).toBe(calls[0]?.values[0]);
+    expect(calls[0]?.values[4]).toBe(calls[0]?.values[1]);
+    expect(calls[0]?.values[5]).toBe("guest-id");
+  });
+
+  test("revokes a Guest's active Invitation URL", async () => {
+    const { calls, sql } = createSqlStub([[{ id: "guest-id" }]]);
+
+    await revokeGuestInvitation(sql, "guest-id");
+
+    expect(calls[0]?.text).toContain("UPDATE invitations");
+    expect(calls[0]?.text).toContain("is_active = false");
+    expect(calls[0]?.text).toContain("revoked_at = now()");
+    expect(calls[0]?.values).toEqual(["guest-id"]);
   });
 
   test("lists active Guest Invitation URLs for admin", async () => {

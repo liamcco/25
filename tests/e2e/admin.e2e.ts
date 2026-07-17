@@ -234,6 +234,100 @@ test.describe("Admin View", () => {
     );
   });
 
+  test("regenerates and revokes Invitation URLs without losing RSVP state", async ({
+    page,
+  }) => {
+    const displayName = `Lifecycle Guest ${Date.now()}`;
+
+    await page.goto("/admin/login");
+    await page.getByLabel("Password").fill("test-admin-password");
+    await page.getByRole("button", { name: "Log in" }).click();
+
+    await page.locator("#newGuestDisplayName").fill(displayName);
+    await page.getByRole("button", { name: "Create Guest" }).click();
+    await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
+
+    const invitationUrlInput = page.getByRole("textbox", {
+      name: `${displayName} Invitation URL`,
+    });
+    const oldInvitationUrl = await invitationUrlInput.inputValue();
+    const guestSlug = new URL(oldInvitationUrl).pathname.split("/")[2];
+
+    await page.goto(oldInvitationUrl);
+    await page.getByLabel("Yes, I will attend").check();
+    await page.getByLabel("Note to host").fill("Please save this note.");
+    await page.getByRole("button", { name: "Save RSVP" }).click();
+    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+
+    await page.goto("/admin");
+    const guestRow = page.getByTestId(`guest-row-${guestSlug}`);
+    await expect(
+      guestRow.getByTestId(`guest-rsvp-status-${guestSlug}`),
+    ).toHaveText("Yes");
+    await expect(
+      guestRow.getByTestId(`guest-rsvp-note-${guestSlug}`),
+    ).toHaveText("Please save this note.");
+
+    await guestRow
+      .getByRole("button", { name: "Regenerate Invitation URL" })
+      .click();
+    await expect(
+      page.getByText("The previous Invitation URL is no longer active."),
+    ).toBeVisible();
+    const newInvitationUrl = await page
+      .getByRole("textbox", {
+        name: `${displayName} Invitation URL`,
+      })
+      .inputValue();
+
+    expect(newInvitationUrl).not.toBe(oldInvitationUrl);
+    expect(newInvitationUrl).toMatch(/\/i\/lifecycle-guest-/);
+
+    await page.goto(oldInvitationUrl);
+    await expect(page.getByText("Invitation unavailable")).toBeVisible();
+    await expect(page.getByText(displayName)).toHaveCount(0);
+    await expect(page.getByText("Party details")).toHaveCount(0);
+    await expect(page.getByText("Current RSVP")).toHaveCount(0);
+
+    await page.goto(newInvitationUrl);
+    await expect(page.getByText(`Invitation for ${displayName}`)).toBeVisible();
+    await expect(page.getByText("Current RSVP: Yes")).toBeVisible();
+    await expect(page.getByText("Please save this note.")).toHaveCount(0);
+
+    await page.goto("/admin");
+    await page
+      .getByTestId(`guest-row-${guestSlug}`)
+      .getByRole("button", { name: "Revoke Invitation" })
+      .click();
+    await expect(
+      page.getByText("The Invitation URL is no longer active."),
+    ).toBeVisible();
+    const revokedGuestRow = page.getByTestId(`guest-row-${guestSlug}`);
+    await expect(revokedGuestRow).toBeVisible();
+    await expect(
+      revokedGuestRow.getByText(
+        "Regenerate this Guest's Invitation URL to restore access.",
+      ),
+    ).toBeVisible();
+    await expect(
+      revokedGuestRow.getByTestId(`guest-rsvp-status-${guestSlug}`),
+    ).toHaveText("Yes");
+    await expect(
+      revokedGuestRow.getByTestId(`guest-rsvp-note-${guestSlug}`),
+    ).toHaveText("Please save this note.");
+    await expect(
+      revokedGuestRow.getByRole("button", { name: "Revoke Invitation" }),
+    ).toHaveCount(0);
+
+    await page.goto(newInvitationUrl);
+    await expect(
+      page.getByText("This invitation link is no longer active."),
+    ).toBeVisible();
+    await expect(page.getByText(displayName)).toHaveCount(0);
+    await expect(page.getByText("Party details")).toHaveCount(0);
+    await expect(page.getByText("Current RSVP")).toHaveCount(0);
+  });
+
   test("gates Confirmed Party Info and shows a sorted names-only Attendee List", async ({
     page,
   }) => {

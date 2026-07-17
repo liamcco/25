@@ -14,6 +14,8 @@ import {
 import { getCurrentAdminSession } from "@/lib/admin-session";
 import {
   createGuestWithInvitation,
+  regenerateGuestInvitation,
+  revokeGuestInvitation,
   updateGuestDisplayName,
 } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
@@ -91,6 +93,34 @@ export async function saveGuestDisplayName(formData: FormData) {
 
   revalidatePath("/admin");
   redirect("/admin?guestSaved=1");
+}
+
+export async function regenerateInvitation(formData: FormData) {
+  if (!(await getCurrentAdminSession())) {
+    redirect("/admin/login");
+  }
+
+  await regenerateGuestInvitation(createSql(), {
+    guestId: getRequiredString(formData, "guestId"),
+    origin: await getRequestOrigin(),
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?invitationRegenerated=1");
+}
+
+export async function revokeInvitation(formData: FormData) {
+  if (!(await getCurrentAdminSession())) {
+    redirect("/admin/login");
+  }
+
+  await revokeGuestInvitation(
+    createSql(),
+    getRequiredString(formData, "guestId"),
+  );
+
+  revalidatePath("/admin");
+  redirect("/admin?invitationRevoked=1");
 }
 
 function getRequiredString(formData: FormData, name: string) {

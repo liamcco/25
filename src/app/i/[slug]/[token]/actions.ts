@@ -20,7 +20,7 @@ export async function submitRsvp(token: string, formData: FormData) {
     origin: await getRequestOrigin(),
   });
 
-  if (access.status === "not_found") {
+  if (access.status !== "active") {
     redirect(`/i/invalid/${token}`);
   }
 

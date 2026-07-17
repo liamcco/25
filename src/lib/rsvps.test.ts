@@ -71,6 +71,15 @@ describe("RSVP persistence", () => {
           rsvp_is_late: null,
           rsvp_note: null,
         },
+        {
+          id: "guest-3",
+          display_name: "Katherine Johnson",
+          guest_name_slug: "katherine-johnson",
+          token: null,
+          rsvp_status: "no",
+          rsvp_is_late: false,
+          rsvp_note: "Revoked but still visible.",
+        },
       ],
       [
         {
@@ -101,6 +110,14 @@ describe("RSVP persistence", () => {
         invitationUrl: "https://example.com/i/grace-hopper/token-2",
         rsvp: { status: "not_responded" },
         rsvpNote: "",
+      },
+      {
+        id: "guest-3",
+        displayName: "Katherine Johnson",
+        guestNameSlug: "katherine-johnson",
+        invitationUrl: null,
+        rsvp: { status: "no" },
+        rsvpNote: "Revoked but still visible.",
       },
     ]);
 

@@ -6,7 +6,7 @@ export type GuestWithResponse = {
   id: string;
   displayName: string;
   guestNameSlug: string;
-  invitationUrl: string;
+  invitationUrl: string | null;
   rsvp: RsvpState;
   rsvpNote: string;
 };
@@ -36,7 +36,7 @@ type GuestWithResponseRow = {
   id: string;
   display_name: string;
   guest_name_slug: string;
-  token: string;
+  token: string | null;
   rsvp_status: RsvpAnswer | null;
   rsvp_is_late: boolean | null;
   rsvp_note: string | null;
@@ -120,14 +120,19 @@ export async function listGuestsWithResponses(
     SELECT guests.id,
            guests.display_name,
            guests.guest_name_slug,
-           invitations.token,
+           active_invitation.token,
            rsvps.status AS rsvp_status,
            rsvps.is_late AS rsvp_is_late,
            rsvps.note AS rsvp_note
     FROM guests
-    JOIN invitations ON invitations.guest_id = guests.id
+    LEFT JOIN LATERAL (
+      SELECT token
+      FROM invitations
+      WHERE invitations.guest_id = guests.id
+        AND invitations.is_active = true
+      LIMIT 1
+    ) active_invitation ON true
     LEFT JOIN rsvps ON rsvps.guest_id = guests.id
-    WHERE invitations.is_active = true
     ORDER BY lower(guests.display_name), guests.created_at
   `) as GuestWithResponseRow[];
 
@@ -135,7 +140,9 @@ export async function listGuestsWithResponses(
     id: row.id,
     displayName: row.display_name,
     guestNameSlug: row.guest_name_slug,
-    invitationUrl: createInvitationUrl(origin, row.guest_name_slug, row.token),
+    invitationUrl: row.token
+      ? createInvitationUrl(origin, row.guest_name_slug, row.token)
+      : null,
     rsvp: mapRsvpRow(
       row.rsvp_status
         ? { status: row.rsvp_status, is_late: row.rsvp_is_late }
