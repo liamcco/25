@@ -124,26 +124,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
-                <div className="grid gap-3 sm:grid-cols-5">
+                <div className="grid gap-3 sm:grid-cols-4">
                   <ResponseCount
-                    label="Totalt antal gäster"
-                    value={responseSummary.totalGuests}
+                    label="Skickade inbjudningar"
+                    value={responseSummary.totalInvitationsSent}
                   />
                   <ResponseCount
-                    label="Inte svarat"
+                    label="Inte svarat av skickade"
                     value={responseSummary.notResponded}
                   />
                   <ResponseCount label="Ja" value={responseSummary.yes} />
-                  <ResponseCount
-                    label="Ja, sent"
-                    value={responseSummary.yesLate}
-                  />
                   <ResponseCount label="Nej" value={responseSummary.no} />
                 </div>
-                {responseSummary.yes +
-                  responseSummary.yesLate +
-                  responseSummary.no ===
-                0 ? (
+                {responseSummary.yes + responseSummary.no === 0 ? (
                   <EmptyState
                     icon={<ClipboardList />}
                     title="Inga svar ännu"

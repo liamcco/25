@@ -1,3 +1,5 @@
+import { CircleCheck } from "lucide-react";
+import { redirect } from "next/navigation";
 import { DeclineRsvpDialog } from "@/app/i/[slug]/[token]/decline-rsvp-dialog";
 import {
   ConfirmedDetailsCard,
@@ -24,7 +26,6 @@ import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
 import { getGuestRsvp, listConfirmedAttendees } from "@/lib/rsvps";
-import { redirect } from "next/navigation";
 
 type RsvpYesPageProps = {
   params: Promise<{
@@ -92,7 +93,7 @@ export default async function RsvpYesPage({
         <TabsContent value="guest-list">
           <Card>
             <CardHeader>
-              <CardTitle>Gästlista</CardTitle>
+              <CardTitle>Dessa har tackat ja</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -107,7 +108,7 @@ export default async function RsvpYesPage({
                 <TableBody data-testid="attendee-list">
                   <TableRow>
                     <TableCell className="font-medium">
-                      {access.guest.displayName}
+                      <AcceptedGuestName name={access.guest.displayName} />
                     </TableCell>
                     <TableCell className="text-right">
                       <DeclineRsvpDialog
@@ -118,7 +119,9 @@ export default async function RsvpYesPage({
                   </TableRow>
                   {otherAttendees.map((attendee, index) => (
                     <TableRow key={`${attendee.displayName}-${index}`}>
-                      <TableCell>{attendee.displayName}</TableCell>
+                      <TableCell>
+                        <AcceptedGuestName name={attendee.displayName} />
+                      </TableCell>
                       <TableCell />
                     </TableRow>
                   ))}
@@ -129,5 +132,17 @@ export default async function RsvpYesPage({
         </TabsContent>
       </Tabs>
     </InvitationShell>
+  );
+}
+
+function AcceptedGuestName({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      <CircleCheck
+        aria-hidden="true"
+        className="size-4 shrink-0 text-green-600"
+      />
+      <span>{name}</span>
+    </span>
   );
 }

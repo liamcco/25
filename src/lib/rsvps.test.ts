@@ -143,7 +143,7 @@ describe("RSVP persistence", () => {
   });
 
   test("lists admin-visible statuses and summary counts", async () => {
-    const { sql } = createSqlStub([
+    const { calls, sql } = createSqlStub([
       [
         {
           id: "guest-1",
@@ -178,10 +178,9 @@ describe("RSVP persistence", () => {
       ],
       [
         {
-          total_guests: "4",
+          total_invitations_sent: "3",
           not_responded: "1",
-          yes: "1",
-          yes_late: "1",
+          yes: "2",
           no: "1",
         },
       ],
@@ -220,12 +219,14 @@ describe("RSVP persistence", () => {
     ]);
 
     await expect(getGuestResponseSummary(sql)).resolves.toEqual({
-      totalGuests: 4,
+      totalInvitationsSent: 3,
       notResponded: 1,
-      yes: 1,
-      yesLate: 1,
+      yes: 2,
       no: 1,
     });
+    expect(calls[1]?.text).toContain("guests.invitation_sent = true");
+    expect(calls[1]?.text).toContain("rsvps.status = 'yes'");
+    expect(calls[1]?.text).not.toContain("yes_late");
   });
 
   test("lists names only for current Yes RSVPs in display-name order", async () => {

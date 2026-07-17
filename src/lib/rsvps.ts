@@ -18,10 +18,9 @@ export type GuestWithResponse = {
 };
 
 export type GuestResponseSummary = {
-  totalGuests: number;
+  totalInvitationsSent: number;
   notResponded: number;
   yes: number;
-  yesLate: number;
   no: number;
 };
 
@@ -61,10 +60,9 @@ type GuestWithResponseRow = {
 };
 
 type SummaryRow = {
-  total_guests: number | string;
+  total_invitations_sent: number | string;
   not_responded: number | string;
   yes: number | string;
-  yes_late: number | string;
   no: number | string;
 };
 
@@ -190,21 +188,19 @@ export async function getGuestResponseSummary(
   sql: SqlExecutor,
 ): Promise<GuestResponseSummary> {
   const rows = (await sql`
-    SELECT count(*) AS total_guests,
-           count(*) FILTER (WHERE rsvps.guest_id IS NULL) AS not_responded,
-           count(*) FILTER (WHERE rsvps.status = 'yes' AND rsvps.is_late = false) AS yes,
-           count(*) FILTER (WHERE rsvps.status = 'yes' AND rsvps.is_late = true) AS yes_late,
-           count(*) FILTER (WHERE rsvps.status = 'no') AS no
+    SELECT count(*) FILTER (WHERE guests.invitation_sent = true) AS total_invitations_sent,
+           count(*) FILTER (WHERE guests.invitation_sent = true AND rsvps.guest_id IS NULL) AS not_responded,
+           count(*) FILTER (WHERE guests.invitation_sent = true AND rsvps.status = 'yes') AS yes,
+           count(*) FILTER (WHERE guests.invitation_sent = true AND rsvps.status = 'no') AS no
     FROM guests
     LEFT JOIN rsvps ON rsvps.guest_id = guests.id
   `) as SummaryRow[];
   const row = rows[0];
 
   return {
-    totalGuests: toCount(row?.total_guests),
+    totalInvitationsSent: toCount(row?.total_invitations_sent),
     notResponded: toCount(row?.not_responded),
     yes: toCount(row?.yes),
-    yesLate: toCount(row?.yes_late),
     no: toCount(row?.no),
   };
 }

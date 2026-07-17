@@ -211,10 +211,9 @@ test.describe("Adminvy", () => {
       .click();
 
     const initialCounts = {
-      totalGuests: await getCount("total-guests"),
-      notResponded: await getCount("not-responded"),
+      totalInvitationsSent: await getCount("skickade-inbjudningar"),
+      notResponded: await getCount("inte-svarat-av-skickade"),
       yes: await getCount("yes"),
-      yesLate: await getCount("yes-late"),
       no: await getCount("no"),
     };
 
@@ -230,13 +229,30 @@ test.describe("Adminvy", () => {
       })
       .click();
 
+    let invitationSentCheckbox = page.getByRole("checkbox", {
+      name: `Inbjudan skickad till ${displayName}`,
+    });
+    await Promise.all([
+      page.waitForResponse(
+        (response) =>
+          response.request().method() === "POST" &&
+          response.url().includes("/admin"),
+      ),
+      invitationSentCheckbox.check(),
+    ]);
+    await page.reload();
+    invitationSentCheckbox = page.getByRole("checkbox", {
+      name: `Inbjudan skickad till ${displayName}`,
+    });
+    await expect(invitationSentCheckbox).toBeChecked();
+
     await page.goto("/admin");
-    await expect(page.getByTestId("response-count-total-guests")).toHaveText(
-      String(initialCounts.totalGuests + 1),
-    );
-    await expect(page.getByTestId("response-count-not-responded")).toHaveText(
-      String(initialCounts.notResponded + 1),
-    );
+    await expect(
+      page.getByTestId("response-count-skickade-inbjudningar"),
+    ).toHaveText(String(initialCounts.totalInvitationsSent + 1));
+    await expect(
+      page.getByTestId("response-count-inte-svarat-av-skickade"),
+    ).toHaveText(String(initialCounts.notResponded + 1));
     await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
       "Inte svarat",
@@ -267,17 +283,14 @@ test.describe("Adminvy", () => {
     await expect(page.getByText("Du står på listan")).toBeVisible();
 
     await page.goto("/admin");
-    await expect(page.getByTestId("response-count-total-guests")).toHaveText(
-      String(initialCounts.totalGuests + 1),
-    );
-    await expect(page.getByTestId("response-count-not-responded")).toHaveText(
-      String(initialCounts.notResponded),
-    );
+    await expect(
+      page.getByTestId("response-count-skickade-inbjudningar"),
+    ).toHaveText(String(initialCounts.totalInvitationsSent + 1));
+    await expect(
+      page.getByTestId("response-count-inte-svarat-av-skickade"),
+    ).toHaveText(String(initialCounts.notResponded));
     await expect(page.getByTestId("response-count-yes")).toHaveText(
       String(initialCounts.yes + 1),
-    );
-    await expect(page.getByTestId("response-count-yes-late")).toHaveText(
-      String(initialCounts.yesLate),
     );
     await expect(page.getByTestId("response-count-no")).toHaveText(
       String(initialCounts.no),
@@ -315,17 +328,14 @@ test.describe("Adminvy", () => {
     await expect(page.getByText("Nuvarande svar: Nej")).toBeVisible();
 
     await page.goto("/admin");
-    await expect(page.getByTestId("response-count-total-guests")).toHaveText(
-      String(initialCounts.totalGuests + 1),
-    );
-    await expect(page.getByTestId("response-count-not-responded")).toHaveText(
-      String(initialCounts.notResponded),
-    );
+    await expect(
+      page.getByTestId("response-count-skickade-inbjudningar"),
+    ).toHaveText(String(initialCounts.totalInvitationsSent + 1));
+    await expect(
+      page.getByTestId("response-count-inte-svarat-av-skickade"),
+    ).toHaveText(String(initialCounts.notResponded));
     await expect(page.getByTestId("response-count-yes")).toHaveText(
       String(initialCounts.yes),
-    );
-    await expect(page.getByTestId("response-count-yes-late")).toHaveText(
-      String(initialCounts.yesLate),
     );
     await expect(page.getByTestId("response-count-no")).toHaveText(
       String(initialCounts.no + 1),
@@ -584,6 +594,7 @@ test.describe("Adminvy", () => {
         name: "Gästlista",
       })
       .click();
+    await expect(page.getByText("Dessa har tackat ja")).toBeVisible();
     const attendeeItems = page.getByTestId("attendee-list").getByRole("row");
     const attendeeByName = (name: string) =>
       page.getByTestId("attendee-list").getByRole("row").filter({
