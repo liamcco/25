@@ -15,6 +15,14 @@ type BootstrapOptions = {
   sql?: (statement: string) => Promise<unknown>;
 };
 
+let runtimeBootstrapPromise: Promise<unknown> | undefined;
+
+export async function ensurePersistenceBootstrapped() {
+  runtimeBootstrapPromise ??= bootstrapPersistence();
+
+  return runtimeBootstrapPromise;
+}
+
 export async function bootstrapPersistence(options: BootstrapOptions = {}) {
   const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL;
 

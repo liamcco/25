@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
-import { savePartySettings } from "@/app/admin/actions";
+import {
+  createGuest,
+  saveGuestDisplayName,
+  savePartySettings,
+} from "@/app/admin/actions";
+import { InvitationUrlActions } from "@/components/invitation-url-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +29,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createSql, getOrCreatePartySettings } from "@/lib/admin";
 import { getCurrentAdminSession } from "@/lib/admin-session";
+import { listGuests } from "@/lib/invitations";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { formatStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 
 type AdminPageProps = {
-  searchParams?: Promise<{ saved?: string }>;
+  searchParams?: Promise<{
+    guestCreated?: string;
+    guestSaved?: string;
+    saved?: string;
+  }>;
 };
 
 export default async function AdminPage({ searchParams }: AdminPageProps) {
@@ -36,7 +47,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   const params = await searchParams;
-  const settings = await getOrCreatePartySettings(createSql());
+  const sql = createSql();
+  const origin = await getRequestOrigin();
+  const [settings, guests] = await Promise.all([
+    getOrCreatePartySettings(sql),
+    listGuests(sql, origin),
+  ]);
 
   return (
     <main className="min-h-dvh bg-background px-6 py-8 text-foreground">
@@ -54,6 +70,22 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <Alert>
             <AlertTitle>Saved</AlertTitle>
             <AlertDescription>Party Settings saved.</AlertDescription>
+          </Alert>
+        ) : null}
+        {params?.guestCreated === "1" ? (
+          <Alert>
+            <AlertTitle>Guest created</AlertTitle>
+            <AlertDescription>
+              The Invitation URL is ready to copy or open.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        {params?.guestSaved === "1" ? (
+          <Alert>
+            <AlertTitle>Guest saved</AlertTitle>
+            <AlertDescription>
+              The canonical Invitation URL has been updated.
+            </AlertDescription>
           </Alert>
         ) : null}
 
@@ -158,6 +190,75 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <Button type="submit">Save Party Settings</Button>
             </CardFooter>
           </form>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Guests</CardTitle>
+            <CardDescription>
+              Create Guests and manage each active reusable Invitation URL.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-6">
+            <form
+              action={createGuest}
+              className="flex flex-col gap-3 sm:flex-row"
+            >
+              <Field className="flex-1">
+                <FieldLabel htmlFor="newGuestDisplayName">
+                  Display name
+                </FieldLabel>
+                <Input
+                  id="newGuestDisplayName"
+                  name="displayName"
+                  placeholder="Ada Lovelace"
+                  required
+                />
+              </Field>
+              <div className="flex items-end">
+                <Button type="submit">Create Guest</Button>
+              </div>
+            </form>
+
+            {guests.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                No Guests yet.
+              </p>
+            ) : (
+              <div className="divide-y rounded-lg border">
+                {guests.map((guest) => (
+                  <div key={guest.id} className="flex flex-col gap-4 p-4">
+                    <form
+                      action={saveGuestDisplayName}
+                      className="flex flex-col gap-3 sm:flex-row"
+                    >
+                      <input type="hidden" name="guestId" value={guest.id} />
+                      <Field className="flex-1">
+                        <FieldLabel htmlFor={`displayName-${guest.id}`}>
+                          Display name
+                        </FieldLabel>
+                        <Input
+                          id={`displayName-${guest.id}`}
+                          name="displayName"
+                          defaultValue={guest.displayName}
+                          required
+                        />
+                      </Field>
+                      <div className="flex items-end">
+                        <Button type="submit" variant="outline">
+                          Save Guest
+                        </Button>
+                      </div>
+                    </form>
+                    <InvitationUrlActions
+                      guestName={guest.displayName}
+                      invitationUrl={guest.invitationUrl}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
     </main>

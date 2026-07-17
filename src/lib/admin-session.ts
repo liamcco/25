@@ -4,8 +4,11 @@ import {
   createSql,
   verifyAdminSession,
 } from "@/lib/admin";
+import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 
 export async function getCurrentAdminSession() {
+  await ensurePersistenceBootstrapped();
+
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
 

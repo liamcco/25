@@ -12,6 +12,11 @@ import {
   verifyAdminPassword,
 } from "@/lib/admin";
 import { getCurrentAdminSession } from "@/lib/admin-session";
+import {
+  createGuestWithInvitation,
+  updateGuestDisplayName,
+} from "@/lib/invitations";
+import { getRequestOrigin } from "@/lib/request-origin";
 import type { LateResponsePolicy } from "@/lib/rsvp-policy";
 import { parseStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 
@@ -57,6 +62,35 @@ export async function savePartySettings(formData: FormData) {
 
   revalidatePath("/admin");
   redirect("/admin?saved=1");
+}
+
+export async function createGuest(formData: FormData) {
+  if (!(await getCurrentAdminSession())) {
+    redirect("/admin/login");
+  }
+
+  await createGuestWithInvitation(createSql(), {
+    displayName: getRequiredString(formData, "displayName"),
+    origin: await getRequestOrigin(),
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?guestCreated=1");
+}
+
+export async function saveGuestDisplayName(formData: FormData) {
+  if (!(await getCurrentAdminSession())) {
+    redirect("/admin/login");
+  }
+
+  await updateGuestDisplayName(createSql(), {
+    guestId: getRequiredString(formData, "guestId"),
+    displayName: getRequiredString(formData, "displayName"),
+    origin: await getRequestOrigin(),
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin?guestSaved=1");
 }
 
 function getRequiredString(formData: FormData, name: string) {

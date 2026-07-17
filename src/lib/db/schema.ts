@@ -29,6 +29,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS guests_guest_name_slug_key
 CREATE TABLE IF NOT EXISTS invitations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   guest_id uuid NOT NULL REFERENCES guests(id) ON DELETE CASCADE,
+  token text NOT NULL,
   token_hash text NOT NULL UNIQUE,
   is_active boolean NOT NULL DEFAULT true,
   revoked_at timestamptz,
@@ -36,6 +37,31 @@ CREATE TABLE IF NOT EXISTS invitations (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CHECK (is_active OR revoked_at IS NOT NULL)
 );
+
+ALTER TABLE invitations
+  ADD COLUMN IF NOT EXISTS token text;
+
+WITH invitation_token_backfill AS (
+  SELECT id,
+         replace(
+           replace(replace(encode(gen_random_bytes(24), 'base64'), '+', '-'), '/', '_'),
+           '=',
+           ''
+         ) AS token
+  FROM invitations
+  WHERE token IS NULL
+)
+UPDATE invitations
+SET token = invitation_token_backfill.token,
+    token_hash = encode(digest(invitation_token_backfill.token, 'sha256'), 'hex')
+FROM invitation_token_backfill
+WHERE invitations.id = invitation_token_backfill.id;
+
+ALTER TABLE invitations
+  ALTER COLUMN token SET NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS invitations_token_key
+  ON invitations (token);
 
 CREATE UNIQUE INDEX IF NOT EXISTS invitations_one_active_per_guest
   ON invitations (guest_id)
