@@ -85,6 +85,18 @@ export function evaluateRsvpChange(
   };
 }
 
+export function formatRsvpState(rsvp: RsvpState) {
+  if (rsvp.status === "not_responded") {
+    return "Not responded";
+  }
+
+  if (rsvp.status === "yes" && rsvp.isLate) {
+    return "Yes late";
+  }
+
+  return rsvp.status === "yes" ? "Yes" : "No";
+}
+
 function toRsvpState(
   answer: RsvpAnswer,
   isLate: boolean,

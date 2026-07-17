@@ -29,8 +29,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createSql, getOrCreatePartySettings } from "@/lib/admin";
 import { getCurrentAdminSession } from "@/lib/admin-session";
-import { listGuests } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
+import { formatRsvpState } from "@/lib/rsvp-policy";
+import { getGuestResponseSummary, listGuestsWithResponses } from "@/lib/rsvps";
 import { formatStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 
 type AdminPageProps = {
@@ -49,9 +50,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const sql = createSql();
   const origin = await getRequestOrigin();
-  const [settings, guests] = await Promise.all([
+  const [settings, guests, responseSummary] = await Promise.all([
     getOrCreatePartySettings(sql),
-    listGuests(sql, origin),
+    listGuestsWithResponses(sql, origin),
+    getGuestResponseSummary(sql),
   ]);
 
   return (
@@ -200,6 +202,20 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
+            <div className="grid gap-3 sm:grid-cols-5">
+              <ResponseCount
+                label="Total guests"
+                value={responseSummary.totalGuests}
+              />
+              <ResponseCount
+                label="Not responded"
+                value={responseSummary.notResponded}
+              />
+              <ResponseCount label="Yes" value={responseSummary.yes} />
+              <ResponseCount label="Yes late" value={responseSummary.yesLate} />
+              <ResponseCount label="No" value={responseSummary.no} />
+            </div>
+
             <form
               action={createGuest}
               className="flex flex-col gap-3 sm:flex-row"
@@ -254,6 +270,27 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       guestName={guest.displayName}
                       invitationUrl={guest.invitationUrl}
                     />
+                    <div className="grid gap-2 rounded-md bg-muted/40 p-3 text-sm">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">RSVP status</span>
+                        <span
+                          data-testid={`guest-rsvp-status-${guest.guestNameSlug}`}
+                        >
+                          {formatRsvpState(guest.rsvp)}
+                        </span>
+                      </div>
+                      {guest.rsvpNote ? (
+                        <div className="grid gap-1">
+                          <span className="font-medium">RSVP note</span>
+                          <p
+                            data-testid={`guest-rsvp-note-${guest.guestNameSlug}`}
+                            className="whitespace-pre-wrap text-muted-foreground"
+                          >
+                            {guest.rsvpNote}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -262,5 +299,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         </Card>
       </div>
     </main>
+  );
+}
+
+function ResponseCount({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md border p-3">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p
+        data-testid={`response-count-${label.toLowerCase().replace(/\s+/g, "-")}`}
+        className="text-2xl font-semibold"
+      >
+        {value}
+      </p>
+    </div>
   );
 }

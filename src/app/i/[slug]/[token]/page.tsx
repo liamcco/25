@@ -1,20 +1,32 @@
 import { redirect } from "next/navigation";
+import { submitRsvp } from "@/app/i/[slug]/[token]/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { createSql, getOrCreatePartySettings } from "@/lib/admin";
 import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
+import { formatRsvpState } from "@/lib/rsvp-policy";
+import { getGuestRsvp } from "@/lib/rsvps";
 
 type InvitationPageProps = {
   params: Promise<{
     slug: string;
     token: string;
   }>;
+  searchParams?: Promise<{
+    rsvpSaved?: string;
+  }>;
 };
 
-export default async function InvitationPage({ params }: InvitationPageProps) {
+export default async function InvitationPage({
+  params,
+  searchParams,
+}: InvitationPageProps) {
   const { slug, token } = await params;
+  const feedback = await searchParams;
   await ensurePersistenceBootstrapped();
 
   const sql = createSql();
@@ -41,7 +53,11 @@ export default async function InvitationPage({ params }: InvitationPageProps) {
     redirect(access.invitationUrl);
   }
 
-  const settings = await getOrCreatePartySettings(sql);
+  const [settings, rsvp] = await Promise.all([
+    getOrCreatePartySettings(sql),
+    getGuestRsvp(sql, access.guest.id),
+  ]);
+  const submitRsvpForToken = submitRsvp.bind(null, token);
 
   return (
     <main className="min-h-dvh bg-background px-6 py-10 text-foreground">
@@ -54,6 +70,13 @@ export default async function InvitationPage({ params }: InvitationPageProps) {
             {settings.title || "Private invitation"}
           </h1>
         </header>
+
+        {feedback?.rsvpSaved === "1" ? (
+          <Alert>
+            <AlertTitle>Saved</AlertTitle>
+            <AlertDescription>Your RSVP has been saved.</AlertDescription>
+          </Alert>
+        ) : null}
 
         <Card>
           <CardHeader>
@@ -70,6 +93,56 @@ export default async function InvitationPage({ params }: InvitationPageProps) {
               label="Public Party Info"
               value={settings.publicInfo}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>RSVP</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-5">
+            <p className="text-base font-medium">
+              Current RSVP: {formatRsvpState(rsvp)}
+            </p>
+            <form action={submitRsvpForToken} className="grid gap-4">
+              <fieldset className="grid gap-3">
+                <legend className="text-sm font-medium text-muted-foreground">
+                  Your response
+                </legend>
+                <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="answer"
+                    value="yes"
+                    defaultChecked={rsvp.status === "yes"}
+                    required
+                  />
+                  Yes, I will attend
+                </label>
+                <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="answer"
+                    value="no"
+                    defaultChecked={rsvp.status === "no"}
+                    required
+                  />
+                  No, I cannot attend
+                </label>
+              </fieldset>
+              <label className="grid gap-2 text-sm font-medium" htmlFor="note">
+                Note to host
+                <Textarea
+                  id="note"
+                  name="note"
+                  placeholder="Optional"
+                  className="font-normal"
+                />
+              </label>
+              <div>
+                <Button type="submit">Save RSVP</Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
       </div>
