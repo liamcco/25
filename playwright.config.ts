@@ -12,7 +12,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "bun run dev",
+    command: "ADMIN_PASSWORD=test-admin-password bun run dev",
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },
