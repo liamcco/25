@@ -9,7 +9,7 @@ import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
 import { formatRsvpState } from "@/lib/rsvp-policy";
-import { getGuestRsvp } from "@/lib/rsvps";
+import { getGuestRsvp, listConfirmedAttendees } from "@/lib/rsvps";
 
 type InvitationPageProps = {
   params: Promise<{
@@ -57,6 +57,8 @@ export default async function InvitationPage({
     getOrCreatePartySettings(sql),
     getGuestRsvp(sql, access.guest.id),
   ]);
+  const attendeeList =
+    rsvp.status === "yes" ? await listConfirmedAttendees(sql) : [];
   const submitRsvpForToken = submitRsvp.bind(null, token);
 
   return (
@@ -145,6 +147,38 @@ export default async function InvitationPage({
             </form>
           </CardContent>
         </Card>
+
+        {rsvp.status === "yes" ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Confirmed Party Info</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              <InvitationDetail
+                label="Confirmed Party Info"
+                value={settings.confirmedInfo}
+              />
+              <section className="grid gap-3" aria-labelledby="attendee-list">
+                <h2
+                  id="attendee-list"
+                  className="text-sm font-medium text-muted-foreground"
+                >
+                  Attendee List
+                </h2>
+                <ul className="grid gap-2" data-testid="attendee-list">
+                  {attendeeList.map((attendee, index) => (
+                    <li
+                      key={`${attendee.displayName}-${index}`}
+                      className="rounded-md border px-3 py-2 text-base"
+                    >
+                      {attendee.displayName}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </main>
   );

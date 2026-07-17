@@ -233,4 +233,108 @@ test.describe("Admin View", () => {
       0,
     );
   });
+
+  test("gates Confirmed Party Info and shows a sorted names-only Attendee List", async ({
+    page,
+  }) => {
+    const runId = Date.now();
+    const confirmedInfo = `Confirmed details ${runId}`;
+    const privateNote = `Private RSVP note ${runId}`;
+
+    const createGuest = async (displayName: string) => {
+      await page.goto("/admin");
+      await page.locator("#newGuestDisplayName").fill(displayName);
+      await page.getByRole("button", { name: "Create Guest" }).click();
+      await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
+
+      return page
+        .getByRole("textbox", {
+          name: `${displayName} Invitation URL`,
+        })
+        .inputValue();
+    };
+
+    const submitResponse = async (
+      invitationUrl: string,
+      answer: "Yes, I will attend" | "No, I cannot attend",
+      note = "",
+    ) => {
+      await page.goto(invitationUrl);
+      await page.getByLabel(answer).check();
+      await page.getByLabel("Note to host").fill(note);
+      await page.getByRole("button", { name: "Save RSVP" }).click();
+      await expect(page.getByText("Your RSVP has been saved.")).toBeVisible();
+    };
+
+    await page.goto("/admin/login");
+    await page.getByLabel("Password").fill("test-admin-password");
+    await page.getByRole("button", { name: "Log in" }).click();
+
+    await page.getByLabel("Title").fill(`Confirmed List Party ${runId}`);
+    await page.getByLabel("Date and time").fill("2026-08-15T18:00");
+    await page
+      .getByLabel("Location and logistics")
+      .fill("Stockholm, details shared privately.");
+    await page.getByLabel("Dress code").fill("Summer formal");
+    await page
+      .getByLabel("Public Party Info")
+      .fill("Public details before RSVP.");
+    await page.getByLabel("Confirmed Party Info").fill(confirmedInfo);
+    await page.getByLabel("Late Response Policy").selectOption("accept_late");
+    await page.getByRole("button", { name: "Save Party Settings" }).click();
+    await expect(page.getByText("Party Settings saved.")).toBeVisible();
+
+    const adaName = `Ada Confirmed ${runId}`;
+    const monaName = `Mona Confirmed ${runId}`;
+    const zeldaName = `Zelda Confirmed ${runId}`;
+    const nedName = `Ned Declined ${runId}`;
+    const graceName = `Grace Waiting ${runId}`;
+
+    const adaUrl = await createGuest(adaName);
+    const monaUrl = await createGuest(monaName);
+    const zeldaUrl = await createGuest(zeldaName);
+    const nedUrl = await createGuest(nedName);
+    const graceUrl = await createGuest(graceName);
+
+    await submitResponse(zeldaUrl, "Yes, I will attend");
+    await submitResponse(adaUrl, "Yes, I will attend", privateNote);
+    await submitResponse(monaUrl, "Yes, I will attend");
+    await submitResponse(nedUrl, "No, I cannot attend");
+
+    await page.goto(graceUrl);
+    await expect(page.getByText("Current RSVP: Not responded")).toBeVisible();
+    await expect(page.getByText(confirmedInfo)).toHaveCount(0);
+    await expect(page.getByTestId("attendee-list")).toHaveCount(0);
+
+    await page.goto(nedUrl);
+    await expect(page.getByText("Current RSVP: No")).toBeVisible();
+    await expect(page.getByText(confirmedInfo)).toHaveCount(0);
+    await expect(page.getByTestId("attendee-list")).toHaveCount(0);
+
+    await page.goto(adaUrl);
+    await expect(page.getByText(confirmedInfo)).toBeVisible();
+    const attendeeItems = page.getByTestId("attendee-list").locator("li");
+    const attendeeByName = (name: string) =>
+      page.getByTestId("attendee-list").locator("li").filter({ hasText: name });
+    await expect(attendeeByName(adaName)).toHaveText(adaName);
+    await expect(attendeeByName(monaName)).toHaveText(monaName);
+    await expect(attendeeByName(zeldaName)).toHaveText(zeldaName);
+    await expect(page.getByText(privateNote)).toHaveCount(0);
+
+    const attendeeNames = await attendeeItems.allInnerTexts();
+    expect(attendeeNames.indexOf(adaName)).toBeLessThan(
+      attendeeNames.indexOf(monaName),
+    );
+    expect(attendeeNames.indexOf(monaName)).toBeLessThan(
+      attendeeNames.indexOf(zeldaName),
+    );
+
+    await submitResponse(adaUrl, "No, I cannot attend");
+
+    await page.goto(monaUrl);
+    await expect(page.getByText(confirmedInfo)).toBeVisible();
+    await expect(attendeeByName(adaName)).toHaveCount(0);
+    await expect(attendeeByName(monaName)).toHaveText(monaName);
+    await expect(attendeeByName(zeldaName)).toHaveText(zeldaName);
+  });
 });

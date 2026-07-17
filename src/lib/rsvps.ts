@@ -19,9 +19,17 @@ export type GuestResponseSummary = {
   no: number;
 };
 
+export type ConfirmedAttendee = {
+  displayName: string;
+};
+
 type RsvpRow = {
   status: RsvpAnswer;
   is_late: boolean | null;
+};
+
+type ConfirmedAttendeeRow = {
+  display_name: string;
 };
 
 type GuestWithResponseRow = {
@@ -86,6 +94,22 @@ export async function saveGuestRsvp(
   `;
 
   return next;
+}
+
+export async function listConfirmedAttendees(
+  sql: SqlExecutor,
+): Promise<ConfirmedAttendee[]> {
+  const rows = (await sql`
+    SELECT guests.display_name
+    FROM guests
+    JOIN rsvps ON rsvps.guest_id = guests.id
+    WHERE rsvps.status = 'yes'
+    ORDER BY lower(guests.display_name), guests.display_name, guests.created_at
+  `) as ConfirmedAttendeeRow[];
+
+  return rows.map((row) => ({
+    displayName: row.display_name,
+  }));
 }
 
 export async function listGuestsWithResponses(

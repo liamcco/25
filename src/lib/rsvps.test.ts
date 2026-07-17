@@ -3,6 +3,7 @@ import type { SqlExecutor } from "@/lib/admin";
 import {
   getGuestResponseSummary,
   getGuestRsvp,
+  listConfirmedAttendees,
   listGuestsWithResponses,
   saveGuestRsvp,
 } from "@/lib/rsvps";
@@ -110,5 +111,25 @@ describe("RSVP persistence", () => {
       yesLate: 1,
       no: 1,
     });
+  });
+
+  test("lists names only for current Yes RSVPs in display-name order", async () => {
+    const { calls, sql } = createSqlStub([
+      [
+        { display_name: "Ada Lovelace" },
+        { display_name: "Grace Hopper" },
+        { display_name: "Katherine Johnson" },
+      ],
+    ]);
+
+    await expect(listConfirmedAttendees(sql)).resolves.toEqual([
+      { displayName: "Ada Lovelace" },
+      { displayName: "Grace Hopper" },
+      { displayName: "Katherine Johnson" },
+    ]);
+
+    expect(calls[0]?.text).toContain("WHERE rsvps.status = 'yes'");
+    expect(calls[0]?.text).toContain("ORDER BY lower(guests.display_name)");
+    expect(calls[0]?.text).not.toContain("note");
   });
 });
