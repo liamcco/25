@@ -21,12 +21,15 @@ export function RsvpForm({ currentRsvp, token }: RsvpFormProps) {
   const [selectedAnswer, setSelectedAnswer] = useState<RsvpAnswer | null>(
     initialAnswer,
   );
+  const [note, setNote] = useState("");
   const submitRsvpForToken = useMemo(
     () => submitRsvp.bind(null, token),
     [token],
   );
+  const hasNoteChange = initialAnswer !== null && note.trim().length > 0;
   const hasChanged =
-    selectedAnswer !== null && selectedAnswer !== initialAnswer;
+    (selectedAnswer !== null && selectedAnswer !== initialAnswer) ||
+    hasNoteChange;
 
   return (
     <form action={submitRsvpForToken} className="grid gap-4">
@@ -68,6 +71,8 @@ export function RsvpForm({ currentRsvp, token }: RsvpFormProps) {
           id="note"
           name="note"
           placeholder="Optional"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
           className="font-normal"
         />
       </label>

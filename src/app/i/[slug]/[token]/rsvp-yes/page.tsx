@@ -100,7 +100,9 @@ export default async function RsvpYesPage({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead className="w-16 text-right">Edit</TableHead>
+                    <TableHead className="w-16 text-right">
+                      <span className="sr-only">Edit RSVP</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody data-testid="attendee-list">
