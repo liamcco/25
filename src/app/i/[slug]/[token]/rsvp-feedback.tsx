@@ -18,7 +18,7 @@ export function RsvpFeedback({
 
       {feedback?.rsvpDeclinedLate === "1" ? (
         <Alert>
-          <AlertTitle>RSVP not saved</AlertTitle>
+          <AlertTitle>Svaret sparades inte</AlertTitle>
           <AlertDescription>{LATE_RESPONSE_DECLINED_MESSAGE}</AlertDescription>
         </Alert>
       ) : null}

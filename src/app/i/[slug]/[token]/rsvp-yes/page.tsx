@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { DeclineRsvpDialog } from "@/app/i/[slug]/[token]/decline-rsvp-dialog";
 import {
   ConfirmedDetailsCard,
@@ -25,6 +24,7 @@ import { ensurePersistenceBootstrapped } from "@/lib/db/bootstrap";
 import { getGuestAccessByToken } from "@/lib/invitations";
 import { getRequestOrigin } from "@/lib/request-origin";
 import { getGuestRsvp, listConfirmedAttendees } from "@/lib/rsvps";
+import { redirect } from "next/navigation";
 
 type RsvpYesPageProps = {
   params: Promise<{
@@ -74,15 +74,14 @@ export default async function RsvpYesPage({
     <InvitationShell>
       <InvitationHeader
         guestName={access.guest.displayName}
-        headline="You're on the list"
-        intro="I am so glad you can make it. Here are the confirmed details and everyone who has said yes so far."
+        headline="Du står på listan:)"
       />
 
       <RsvpFeedback feedback={feedback} />
       <Tabs defaultValue="details" className="gap-4">
         <TabsList className="w-full justify-start sm:w-fit">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="guest-list">Guest list</TabsTrigger>
+          <TabsTrigger value="details">Detaljer</TabsTrigger>
+          <TabsTrigger value="guest-list">Gästlista</TabsTrigger>
         </TabsList>
 
         <TabsContent value="details" className="grid gap-5">
@@ -93,15 +92,15 @@ export default async function RsvpYesPage({
         <TabsContent value="guest-list">
           <Card>
             <CardHeader>
-              <CardTitle>Guest list</CardTitle>
+              <CardTitle>Gästlista</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
+                    <TableHead>Namn</TableHead>
                     <TableHead className="w-16 text-right">
-                      <span className="sr-only">Edit RSVP</span>
+                      <span className="sr-only">Ändra svar</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>

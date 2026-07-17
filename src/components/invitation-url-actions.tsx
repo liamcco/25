@@ -25,7 +25,7 @@ export function InvitationUrlActions({
   return (
     <div className="flex flex-col gap-2 sm:flex-row">
       <Input
-        aria-label={`${guestName} Invitation URL`}
+        aria-label={`Inbjudningslänk för ${guestName}`}
         value={invitationUrl}
         readOnly
         className="font-mono text-xs"
@@ -35,10 +35,10 @@ export function InvitationUrlActions({
           type="button"
           variant="outline"
           onClick={copyInvitationUrl}
-          aria-label={`Copy ${guestName} Invitation URL`}
+          aria-label={`Kopiera inbjudningslänk för ${guestName}`}
         >
           {copied ? <Check /> : <Copy />}
-          {copied ? "Copied" : "Copy"}
+          {copied ? "Kopierad" : "Kopiera"}
         </Button>
         <Button
           type="button"
@@ -46,10 +46,10 @@ export function InvitationUrlActions({
           onClick={() =>
             window.open(invitationUrl, "_blank", "noopener,noreferrer")
           }
-          aria-label={`Open ${guestName} Invitation URL`}
+          aria-label={`Öppna inbjudningslänk för ${guestName}`}
         >
           <ExternalLink />
-          Open
+          Öppna
         </Button>
       </div>
     </div>

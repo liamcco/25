@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Private invitation",
-  description: "Private invitation required.",
+  title: "Privat inbjudan",
+  description: "Privat inbjudan krävs.",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="sv" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         {children}
         <Toaster />

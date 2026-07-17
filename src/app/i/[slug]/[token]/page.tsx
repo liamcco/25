@@ -43,9 +43,9 @@ export default async function InvitationPage({
   if (access.status === "not_found") {
     return (
       <UnavailableInvitation>
-        <AlertTitle>Invitation unavailable</AlertTitle>
+        <AlertTitle>Inbjudan är inte tillgänglig</AlertTitle>
         <AlertDescription>
-          This Invitation URL is invalid or no longer active.
+          Den här inbjudningslänken är ogiltig eller inte längre aktiv.
         </AlertDescription>
       </UnavailableInvitation>
     );
@@ -54,9 +54,9 @@ export default async function InvitationPage({
   if (access.status === "inactive") {
     return (
       <UnavailableInvitation>
-        <AlertTitle>Invitation unavailable</AlertTitle>
+        <AlertTitle>Inbjudan är inte tillgänglig</AlertTitle>
         <AlertDescription>
-          This Invitation URL is no longer active.
+          Den här inbjudningslänken är inte längre aktiv.
         </AlertDescription>
       </UnavailableInvitation>
     );
@@ -84,13 +84,13 @@ export default async function InvitationPage({
         guestName={access.guest.displayName}
         headline={
           hasDeclined
-            ? "So sorry you can't make it"
-            : settings.title || "You're invited"
+            ? "Så tråkigt att du inte kan komma."
+            : settings.title || "Du är inbjuden"
         }
         intro={
           hasDeclined
-            ? "We'll miss you. If plans change, you can still update your RSVP here."
-            : "You are warmly invited to celebrate with us. I would genuinely love to have you there."
+            ? "Vi kommer sakna dig. Om planerna ändras kan du fortfarande uppdatera ditt svar här."
+            : "Du är varmt inbjuden att fira med oss. Jag skulle verkligen bli glad om du kom."
         }
       />
 
@@ -107,7 +107,7 @@ function UnavailableInvitation({ children }: { children: ReactNode }) {
       <Alert variant="destructive" className="max-w-md bg-card">
         {children}
         <AlertDescription className="mt-2">
-          Ask the host for a current Invitation URL if you expected access.
+          Be värden om en aktuell inbjudningslänk om du förväntade dig åtkomst.
         </AlertDescription>
       </Alert>
     </main>

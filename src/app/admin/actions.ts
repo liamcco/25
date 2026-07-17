@@ -130,7 +130,7 @@ function getRequiredString(formData: FormData, name: string) {
   const value = formData.get(name);
 
   if (typeof value !== "string") {
-    throw new Error(`${name} is required`);
+    throw new Error(`${name} krävs`);
   }
 
   return value.trim();
@@ -141,7 +141,7 @@ function parseLateResponsePolicy(value: string): LateResponsePolicy {
     return value;
   }
 
-  throw new Error("Invalid Late Response Policy");
+  throw new Error("Ogiltig policy för sena svar");
 }
 
 function getAdminRedirectPath(formData: FormData, fallback: string) {

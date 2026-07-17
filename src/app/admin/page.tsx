@@ -1,17 +1,3 @@
-import {
-  Ban,
-  CheckCircle2,
-  ClipboardList,
-  Link2,
-  Pencil,
-  RefreshCw,
-  Save,
-  Settings,
-  UserPlus,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createGuest, savePartySettings } from "@/app/admin/actions";
 import { InvitationCopyButton } from "@/components/invitation-copy-button";
 import { PendingSubmitButton } from "@/components/pending-submit-button";
@@ -54,6 +40,20 @@ import { formatRsvpState } from "@/lib/rsvp-policy";
 import { getGuestResponseSummary, listGuestsWithResponses } from "@/lib/rsvps";
 import { formatStockholmDateTimeLocal } from "@/lib/stockholm-datetime";
 import { cn } from "@/lib/utils";
+import {
+  Ban,
+  CheckCircle2,
+  ClipboardList,
+  Link2,
+  Pencil,
+  RefreshCw,
+  Save,
+  Settings,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 type AdminPageProps = {
   searchParams?: Promise<AdminStatusParams>;
@@ -88,15 +88,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Admin View
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">Adminvy</p>
             <h1 className="text-3xl font-semibold tracking-normal">Admin</h1>
           </div>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Manage invitation content, guests, invitation URLs, and RSVP status
-            from one host-only view.
-          </p>
         </header>
 
         <AdminStatusAlerts params={params} />
@@ -105,15 +99,15 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
           <TabsList className="w-full justify-start overflow-x-auto sm:w-fit">
             <TabsTrigger value="overview">
               <ClipboardList />
-              Overview statistics
+              Översikt
             </TabsTrigger>
             <TabsTrigger value="guests">
               <Users />
-              Guest list
+              Gästlista
             </TabsTrigger>
             <TabsTrigger value="settings">
               <Settings />
-              Party settings
+              Festinställningar
             </TabsTrigger>
           </TabsList>
 
@@ -122,28 +116,28 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardList className="size-4" />
-                  Overview statistics
+                  Översikt
                 </CardTitle>
                 <CardDescription>
-                  RSVP totals across the current guest list.
+                  OSA-sammanställning för den aktuella gästlistan.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 <div className="grid gap-3 sm:grid-cols-5">
                   <ResponseCount
-                    label="Total guests"
+                    label="Totalt antal gäster"
                     value={responseSummary.totalGuests}
                   />
                   <ResponseCount
-                    label="Not responded"
+                    label="Inte svarat"
                     value={responseSummary.notResponded}
                   />
-                  <ResponseCount label="Yes" value={responseSummary.yes} />
+                  <ResponseCount label="Ja" value={responseSummary.yes} />
                   <ResponseCount
-                    label="Yes late"
+                    label="Ja, sent"
                     value={responseSummary.yesLate}
                   />
-                  <ResponseCount label="No" value={responseSummary.no} />
+                  <ResponseCount label="Nej" value={responseSummary.no} />
                 </div>
                 {responseSummary.yes +
                   responseSummary.yesLate +
@@ -151,8 +145,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 0 ? (
                   <EmptyState
                     icon={<ClipboardList />}
-                    title="No RSVPs yet"
-                    description="Guest responses will appear here after someone saves an RSVP."
+                    title="Inga svar ännu"
+                    description="Gästernas svar visas här när någon har sparat sitt OSA."
                   />
                 ) : null}
               </CardContent>
@@ -164,12 +158,8 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="size-4" />
-                  Guest list
+                  Gästlista
                 </CardTitle>
-                <CardDescription>
-                  Create guests and scan RSVP status without opening every
-                  record.
-                </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
                 <form
@@ -178,23 +168,23 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 >
                   <Field className="flex-1">
                     <FieldLabel htmlFor="newGuestDisplayName">
-                      Display name
+                      Visningsnamn
                     </FieldLabel>
+                    <FieldDescription id="newGuestDisplayName-description">
+                      Namnet som visas på gästens inbjudan.
+                    </FieldDescription>
                     <Input
                       id="newGuestDisplayName"
                       name="displayName"
-                      placeholder="Ada Lovelace"
+                      placeholder="Anna Andersson"
                       aria-describedby="newGuestDisplayName-description"
                       required
                     />
-                    <FieldDescription id="newGuestDisplayName-description">
-                      The name shown on this Guest&apos;s Invitation.
-                    </FieldDescription>
                   </Field>
                   <div className="flex items-end">
-                    <PendingSubmitButton pendingLabel="Creating Guest...">
+                    <PendingSubmitButton pendingLabel="Skapar gäst...">
                       <UserPlus />
-                      Create Guest
+                      Skapa gäst
                     </PendingSubmitButton>
                   </div>
                 </form>
@@ -202,18 +192,18 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 {guests.length === 0 ? (
                   <EmptyState
                     icon={<Users />}
-                    title="No Guests yet"
-                    description="Create the first Guest to generate an Invitation URL."
+                    title="Inga gäster ännu"
+                    description="Skapa den första gästen för att generera en inbjudningslänk."
                   />
                 ) : (
                   <div className="rounded-lg border bg-background">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>RSVP status</TableHead>
-                          <TableHead className="w-32">Copy link</TableHead>
-                          <TableHead className="w-32">Edit</TableHead>
+                          <TableHead>Namn</TableHead>
+                          <TableHead>OSA-status</TableHead>
+                          <TableHead className="w-32">Kopiera länk</TableHead>
+                          <TableHead className="w-32">Ändra</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -254,10 +244,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                                     size: "sm",
                                   }),
                                 )}
-                                aria-label={`Open ${guest.displayName} guest detail page`}
+                                aria-label={`Öppna gästdetaljer för ${guest.displayName}`}
                               >
                                 <Pencil />
-                                Edit
+                                Ändra
                               </Link>
                             </TableCell>
                           </TableRow>
@@ -275,18 +265,14 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="size-4" />
-                  Party settings
+                  Festinställningar
                 </CardTitle>
-                <CardDescription>
-                  These fields drive the guest-facing invitation and
-                  late-response behavior.
-                </CardDescription>
               </CardHeader>
               <form action={savePartySettings} className="flex flex-col gap-6">
                 <CardContent>
                   <FieldGroup>
                     <Field>
-                      <FieldLabel htmlFor="title">Title</FieldLabel>
+                      <FieldLabel htmlFor="title">Titel</FieldLabel>
                       <Input
                         id="title"
                         name="title"
@@ -295,11 +281,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         required
                       />
                       <FieldDescription id="title-description">
-                        Shown as the guest-facing invitation headline.
+                        Visas som rubrik på inbjudan.
                       </FieldDescription>
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="startsAt">Date and time</FieldLabel>
+                      <FieldLabel htmlFor="startsAt">Datum och tid</FieldLabel>
                       <Input
                         id="startsAt"
                         name="startsAt"
@@ -310,12 +296,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         required
                       />
                       <FieldDescription id="startsAt-description">
-                        Enter the party start in Europe/Stockholm time.
+                        Ange festens starttid i Europe/Stockholm-tid.
                       </FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="location">
-                        Location and logistics
+                        Plats och praktisk info
                       </FieldLabel>
                       <Textarea
                         id="location"
@@ -325,12 +311,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         required
                       />
                       <FieldDescription id="location-description">
-                        Include the address and arrival details guests need
-                        before RSVP.
+                        Inkludera adress och ankomstinformation som gästerna
+                        behöver innan de svarar.
                       </FieldDescription>
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="dressCode">Dress code</FieldLabel>
+                      <FieldLabel htmlFor="dressCode">Klädkod</FieldLabel>
                       <Input
                         id="dressCode"
                         name="dressCode"
@@ -340,7 +326,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="publicInfo">
-                        Public Party Info
+                        Öppen festinfo
                       </FieldLabel>
                       <Textarea
                         id="publicInfo"
@@ -350,12 +336,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         required
                       />
                       <FieldDescription id="publicInfo-description">
-                        Visible to any Guest with an active Invitation URL.
+                        Synlig för alla gäster med en aktiv inbjudningslänk.
                       </FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="confirmedInfo">
-                        Confirmed Party Info
+                        Hemlig information
                       </FieldLabel>
                       <Textarea
                         id="confirmedInfo"
@@ -365,12 +351,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         required
                       />
                       <FieldDescription id="confirmedInfo-description">
-                        Visible only after a Guest answers Yes.
+                        Synlig först efter att en gäst har svarat ja.
                       </FieldDescription>
                     </Field>
                     <Field>
                       <FieldLabel htmlFor="lateResponsePolicy">
-                        Late Response Policy
+                        Policy för sena svar
                       </FieldLabel>
                       <NativeSelect
                         id="lateResponsePolicy"
@@ -379,19 +365,19 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                         className="w-full"
                       >
                         <NativeSelectOption value="decline_late">
-                          Decline late Yes responses
+                          Neka sena ja-svar
                         </NativeSelectOption>
                         <NativeSelectOption value="accept_late">
-                          Accept late Yes responses
+                          Acceptera sena ja-svar
                         </NativeSelectOption>
                       </NativeSelect>
                     </Field>
                   </FieldGroup>
                 </CardContent>
                 <CardFooter>
-                  <PendingSubmitButton pendingLabel="Saving settings...">
+                  <PendingSubmitButton pendingLabel="Sparar inställningar...">
                     <Save />
-                    Save Party Settings
+                    Spara festinställningar
                   </PendingSubmitButton>
                 </CardFooter>
               </form>
@@ -413,43 +399,43 @@ function AdminStatusAlerts({
       {params?.saved === "1" ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Saved</AlertTitle>
-          <AlertDescription>Party Settings saved.</AlertDescription>
+          <AlertTitle>Sparat</AlertTitle>
+          <AlertDescription>Festinställningarna har sparats.</AlertDescription>
         </Alert>
       ) : null}
       {params?.guestCreated === "1" ? (
         <Alert>
           <Link2 />
-          <AlertTitle>Guest created</AlertTitle>
+          <AlertTitle>Gäst skapad</AlertTitle>
           <AlertDescription>
-            The Invitation URL is ready to copy or open.
+            Inbjudningslänken är redo att kopieras eller öppnas.
           </AlertDescription>
         </Alert>
       ) : null}
       {params?.guestSaved === "1" ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Guest saved</AlertTitle>
+          <AlertTitle>Gäst sparad</AlertTitle>
           <AlertDescription>
-            The canonical Invitation URL has been updated.
+            Den kanoniska inbjudningslänken har uppdaterats.
           </AlertDescription>
         </Alert>
       ) : null}
       {params?.invitationRegenerated === "1" ? (
         <Alert>
           <RefreshCw />
-          <AlertTitle>Invitation regenerated</AlertTitle>
+          <AlertTitle>Inbjudan har skapats om</AlertTitle>
           <AlertDescription>
-            The previous Invitation URL is no longer active.
+            Den tidigare inbjudningslänken är inte längre aktiv.
           </AlertDescription>
         </Alert>
       ) : null}
       {params?.invitationRevoked === "1" ? (
         <Alert variant="destructive">
           <Ban />
-          <AlertTitle>Invitation revoked</AlertTitle>
+          <AlertTitle>Inbjudan återkallad</AlertTitle>
           <AlertDescription>
-            The Invitation URL is no longer active.
+            Inbjudningslänken är inte längre aktiv.
           </AlertDescription>
         </Alert>
       ) : null}

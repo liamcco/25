@@ -3,7 +3,7 @@ import { expect, type Page, test } from "@playwright/test";
 async function openGuestDetail(page: Page, displayName: string) {
   await page
     .getByRole("link", {
-      name: `Open ${displayName} guest detail page`,
+      name: `Öppna gästdetaljer för ${displayName}`,
     })
     .click();
 }
@@ -14,105 +14,138 @@ async function getInvitationUrlFromGuestDetail(
 ) {
   return page
     .getByRole("textbox", {
-      name: `${displayName} Invitation URL`,
+      name: `Inbjudningslänk för ${displayName}`,
     })
     .inputValue();
 }
 
-test.describe("Admin View", () => {
-  test.describe.configure({ mode: "serial" });
+test.describe("Adminvy", () => {
+  test.describe.configure({
+    mode: "serial",
+  });
 
   test.skip(
     !process.env.DATABASE_URL,
-    "Admin browser tests require DATABASE_URL for the running app.",
+    "Adminens webbläsartester kräver DATABASE_URL för appen som körs.",
   );
 
-  test("blocks unauthenticated access, logs in, and persists Party Settings", async ({
+  test("blockerar obehörig åtkomst, loggar in och sparar festinställningar", async ({
     page,
   }) => {
     await page.goto("/admin");
 
     await expect(page).toHaveURL(/\/admin\/login$/);
-    await expect(page.getByText("Admin login")).toBeVisible();
+    await expect(page.getByText("Admininloggning")).toBeVisible();
 
-    await page.getByLabel("Password").fill("test-admin-password");
-    await page.getByRole("button", { name: "Log in" }).click();
+    await page.getByLabel("Lösenord").fill("test-admin-password");
+    await page
+      .getByRole("button", {
+        name: "Logga in",
+      })
+      .click();
 
     await expect(page).toHaveURL(/\/admin$/);
-    await page.getByRole("tab", { name: "Party settings" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Festinställningar",
+      })
+      .click();
     await expect(
-      page.getByRole("heading", { name: "Party settings" }),
+      page.getByRole("heading", {
+        name: "Festinställningar",
+      }),
     ).toBeVisible();
 
-    await page.getByLabel("Title").fill("Liam's 25th");
-    await page.getByLabel("Date and time").fill("2026-08-15T18:00");
+    await page.getByLabel("Titel").fill("Liam's 25th");
+    await page.getByLabel("Datum och tid").fill("2026-08-15T18:00");
     await page
-      .getByLabel("Location and logistics")
-      .fill("Stockholm, details shared privately.");
-    await page.getByLabel("Dress code").fill("Summer formal");
+      .getByLabel("Plats och praktisk info")
+      .fill("Stockholm, detaljer delas privat.");
+    await page.getByLabel("Klädkod").fill("Sommarfin");
     await page
-      .getByLabel("Public Party Info")
-      .fill("Please RSVP before the cutoff.");
+      .getByLabel("Öppen festinfo")
+      .fill("Svara gärna före sista svarsdatum.");
     await page
-      .getByLabel("Confirmed Party Info")
-      .fill("Door code and playlist details.");
-    await page.getByLabel("Late Response Policy").selectOption("accept_late");
-    await page.getByRole("button", { name: "Save Party Settings" }).click();
+      .getByLabel("Hemlig information")
+      .fill("Portkod och spellistedetaljer.");
+    await page.getByLabel("Policy för sena svar").selectOption("accept_late");
+    await page
+      .getByRole("button", {
+        name: "Spara festinställningar",
+      })
+      .click();
 
-    await expect(page.getByText("Party Settings saved.")).toBeVisible();
+    await expect(
+      page.getByText("Festinställningarna har sparats."),
+    ).toBeVisible();
 
     await page.reload();
 
-    await expect(page.getByLabel("Title")).toHaveValue("Liam's 25th");
-    await expect(page.getByLabel("Location and logistics")).toHaveValue(
-      "Stockholm, details shared privately.",
+    await expect(page.getByLabel("Titel")).toHaveValue("Liam's 25th");
+    await expect(page.getByLabel("Plats och praktisk info")).toHaveValue(
+      "Stockholm, detaljer delas privat.",
     );
-    await expect(page.getByLabel("Late Response Policy")).toHaveValue(
+    await expect(page.getByLabel("Policy för sena svar")).toHaveValue(
       "accept_late",
     );
   });
 
-  test("creates a Guest and serves the canonical Invitation URL", async ({
+  test("skapar en gäst och visar den kanoniska inbjudningslänken", async ({
     page,
   }) => {
-    const displayName = `Ada Lovelace ${Date.now()}`;
-    const editedName = `Grace Hopper ${Date.now()}`;
+    const displayName = `Anna Andersson ${Date.now()}`;
+    const editedName = `Greta Holm ${Date.now()}`;
 
     await page.goto("/admin/login");
-    await page.getByLabel("Password").fill("test-admin-password");
-    await page.getByRole("button", { name: "Log in" }).click();
+    await page.getByLabel("Lösenord").fill("test-admin-password");
+    await page
+      .getByRole("button", {
+        name: "Logga in",
+      })
+      .click();
 
-    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
     await page.locator("#newGuestDisplayName").fill(displayName);
-    await page.getByRole("button", { name: "Create Guest" }).click();
+    await page
+      .getByRole("button", {
+        name: "Skapa gäst",
+      })
+      .click();
 
-    await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
+    await expect(page.getByText("Inbjudningslänken är redo")).toBeVisible();
     await openGuestDetail(page, displayName);
     const guestDetailUrl = page.url();
     const invitationUrl = await getInvitationUrlFromGuestDetail(
       page,
       displayName,
     );
-    expect(invitationUrl).toMatch(/\/i\/ada-lovelace-/);
+    expect(invitationUrl).toMatch(/\/i\/anna-andersson-/);
 
     await page.goto(invitationUrl);
-    await expect(page.getByText(`Invitation for ${displayName}`)).toBeVisible();
-    await expect(page.getByText("Party details")).toBeVisible();
+    await expect(page.getByText(`Inbjudan till ${displayName}`)).toBeVisible();
 
     await page.goto(guestDetailUrl);
     const displayNameInput = page.locator('input[name="displayName"]');
     await displayNameInput.fill(editedName);
-    await page.getByRole("button", { name: "Save Guest" }).click();
+    await page
+      .getByRole("button", {
+        name: "Spara gäst",
+      })
+      .click();
 
     await expect(
-      page.getByText("The canonical Invitation URL has been updated."),
+      page.getByText("Den kanoniska inbjudningslänken har uppdaterats."),
     ).toBeVisible();
     const editedInvitationUrl = await getInvitationUrlFromGuestDetail(
       page,
       editedName,
     );
 
-    expect(editedInvitationUrl).toMatch(/\/i\/grace-hopper-/);
+    expect(editedInvitationUrl).toMatch(/\/i\/greta-holm-/);
     expect(editedInvitationUrl).toContain(
       invitationUrl.split("/").at(-1) ?? "",
     );
@@ -123,24 +156,28 @@ test.describe("Admin View", () => {
     );
     await page.goto(staleSlugUrl);
     await expect(page).toHaveURL(editedInvitationUrl);
-    await expect(page.getByText(`Invitation for ${editedName}`)).toBeVisible();
+    await expect(page.getByText(`Inbjudan till ${editedName}`)).toBeVisible();
 
     await page.goto(`/i/${displayName.toLowerCase()}/not-a-real-token`);
-    await expect(page.getByText("Invitation unavailable")).toBeVisible();
+    await expect(page.getByText("Inbjudan är inte tillgänglig")).toBeVisible();
     await expect(page.getByText(editedName)).toHaveCount(0);
   });
 
-  test("tracks the guest RSVP loop and admin response summary", async ({
+  test("följer gästens OSA-flöde och adminens svarssammanfattning", async ({
     page,
   }) => {
-    const displayName = `RSVP Guest ${Date.now()}`;
+    const displayName = `OSA-gäst ${Date.now()}`;
     const guestSlug = displayName.toLowerCase().replace(/\s+/g, "-");
     const getCount = async (name: string) =>
       Number(await page.getByTestId(`response-count-${name}`).innerText());
 
     await page.goto("/admin/login");
-    await page.getByLabel("Password").fill("test-admin-password");
-    await page.getByRole("button", { name: "Log in" }).click();
+    await page.getByLabel("Lösenord").fill("test-admin-password");
+    await page
+      .getByRole("button", {
+        name: "Logga in",
+      })
+      .click();
 
     const initialCounts = {
       totalGuests: await getCount("total-guests"),
@@ -150,9 +187,17 @@ test.describe("Admin View", () => {
       no: await getCount("no"),
     };
 
-    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
     await page.locator("#newGuestDisplayName").fill(displayName);
-    await page.getByRole("button", { name: "Create Guest" }).click();
+    await page
+      .getByRole("button", {
+        name: "Skapa gäst",
+      })
+      .click();
 
     await page.goto("/admin");
     await expect(page.getByTestId("response-count-total-guests")).toHaveText(
@@ -163,7 +208,7 @@ test.describe("Admin View", () => {
     );
     await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
-      "Not responded",
+      "Inte svarat",
     );
     await openGuestDetail(page, displayName);
     const invitationUrl = await getInvitationUrlFromGuestDetail(
@@ -172,19 +217,23 @@ test.describe("Admin View", () => {
     );
 
     await page.goto(invitationUrl);
-    await expect(page.getByText("Current RSVP: Not responded")).toBeVisible();
-    await page.getByLabel("Yes, I will attend").check();
-    await page.getByLabel("Note to host").fill("Looking forward to it.");
-    await page.getByRole("button", { name: "Save RSVP" }).click();
+    await expect(page.getByText("Nuvarande svar: Inte svarat")).toBeVisible();
+    await page.getByLabel("Ja, jag kommer").check();
+    await page.getByLabel("Meddelande till värden").fill("Ser fram emot det.");
+    await page
+      .getByRole("button", {
+        name: "Spara svar",
+      })
+      .click();
 
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("Your choice was saved!")).toBeVisible();
-    await expect(page.getByText("You're on the list")).toBeVisible();
-    await expect(page.getByText("Looking forward to it.")).toHaveCount(0);
+    await expect(page.getByText("Ditt svar sparades!")).toBeVisible();
+    await expect(page.getByText("Du står på listan")).toBeVisible();
+    await expect(page.getByText("Ser fram emot det.")).toHaveCount(0);
 
     await page.reload();
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("You're on the list")).toBeVisible();
+    await expect(page.getByText("Du står på listan")).toBeVisible();
 
     await page.goto("/admin");
     await expect(page.getByTestId("response-count-total-guests")).toHaveText(
@@ -204,23 +253,35 @@ test.describe("Admin View", () => {
     );
     await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
-      "Yes",
+      "Ja",
     );
     await openGuestDetail(page, displayName);
     await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
-      "Looking forward to it.",
+      "Ser fram emot det.",
     );
 
     await page.goto(invitationUrl);
-    await page.getByRole("tab", { name: "Guest list" }).click();
     await page
-      .getByRole("button", { name: `Edit ${displayName} RSVP` })
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
       .click();
-    await page.getByRole("button", { name: "I am sure" }).click();
+    await page
+      .getByRole("button", {
+        name: `Ändra svar för ${displayName}`,
+      })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Jag är säker",
+      })
+      .click();
     await expect(page).toHaveURL(/\/i\/[^/]+\/[^/]+\?rsvpSaved=1$/);
-    await expect(page.getByText("Your choice was saved!")).toBeVisible();
-    await expect(page.getByText("So sorry you can't make it")).toBeVisible();
-    await expect(page.getByText("Current RSVP: No")).toBeVisible();
+    await expect(page.getByText("Ditt svar sparades!")).toBeVisible();
+    await expect(
+      page.getByText("Så tråkigt att du inte kan komma."),
+    ).toBeVisible();
+    await expect(page.getByText("Nuvarande svar: Nej")).toBeVisible();
 
     await page.goto("/admin");
     await expect(page.getByTestId("response-count-total-guests")).toHaveText(
@@ -240,31 +301,49 @@ test.describe("Admin View", () => {
     );
     await page.goto("/admin?tab=guests");
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
-      "No",
+      "Nej",
     );
     await openGuestDetail(page, displayName);
-    await expect(page.getByText("No RSVP note yet.")).toBeVisible();
+    await expect(page.getByText("Inget OSA-meddelande ännu.")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Save Guest" }).first(),
+      page
+        .getByRole("button", {
+          name: "Spara gäst",
+        })
+        .first(),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Save RSVP" })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("button", {
+        name: "Spara svar",
+      }),
+    ).toHaveCount(0);
   });
 
-  test("regenerates and revokes Invitation URLs without losing RSVP state", async ({
+  test("skapar om och återkallar inbjudningslänkar utan att tappa OSA-status", async ({
     page,
   }) => {
-    const displayName = `Lifecycle Guest ${Date.now()}`;
+    const displayName = `Livscykelgäst ${Date.now()}`;
 
     await page.goto("/admin/login");
-    await page.getByLabel("Password").fill("test-admin-password");
-    await page.getByRole("button", { name: "Log in" }).click();
+    await page.getByLabel("Lösenord").fill("test-admin-password");
+    await page
+      .getByRole("button", {
+        name: "Logga in",
+      })
+      .click();
 
-    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
     await page.locator("#newGuestDisplayName").fill(displayName);
-    await page.getByRole("button", { name: "Create Guest" }).click();
-    await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: "Skapa gäst",
+      })
+      .click();
+    await expect(page.getByText("Inbjudningslänken är redo")).toBeVisible();
 
     await openGuestDetail(page, displayName);
     const guestDetailUrl = page.url();
@@ -275,27 +354,35 @@ test.describe("Admin View", () => {
     const guestSlug = new URL(oldInvitationUrl).pathname.split("/")[2];
 
     await page.goto(oldInvitationUrl);
-    await page.getByLabel("Yes, I will attend").check();
-    await page.getByLabel("Note to host").fill("Please save this note.");
-    await page.getByRole("button", { name: "Save RSVP" }).click();
+    await page.getByLabel("Ja, jag kommer").check();
+    await page
+      .getByLabel("Meddelande till värden")
+      .fill("Spara gärna det här meddelandet.");
+    await page
+      .getByRole("button", {
+        name: "Spara svar",
+      })
+      .click();
     await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
-    await expect(page.getByText("You're on the list")).toBeVisible();
+    await expect(page.getByText("Du står på listan")).toBeVisible();
 
     await page.goto("/admin?tab=guests");
     const guestRow = page.getByTestId(`guest-row-${guestSlug}`);
     await expect(
       guestRow.getByTestId(`guest-rsvp-status-${guestSlug}`),
-    ).toHaveText("Yes");
+    ).toHaveText("Ja");
     await openGuestDetail(page, displayName);
     await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
-      "Please save this note.",
+      "Spara gärna det här meddelandet.",
     );
 
     await page
-      .getByRole("button", { name: "Regenerate Invitation URL" })
+      .getByRole("button", {
+        name: "Skapa ny inbjudningslänk",
+      })
       .click();
     await expect(
-      page.getByText("The previous Invitation URL is no longer active."),
+      page.getByText("Den tidigare inbjudningslänken är inte längre aktiv."),
     ).toBeVisible();
     const newInvitationUrl = await getInvitationUrlFromGuestDetail(
       page,
@@ -303,65 +390,75 @@ test.describe("Admin View", () => {
     );
 
     expect(newInvitationUrl).not.toBe(oldInvitationUrl);
-    expect(newInvitationUrl).toMatch(/\/i\/lifecycle-guest-/);
+    expect(newInvitationUrl).toMatch(/\/i\/livscykelgast-/);
 
     await page.goto(oldInvitationUrl);
-    await expect(page.getByText("Invitation unavailable")).toBeVisible();
+    await expect(page.getByText("Inbjudan är inte tillgänglig")).toBeVisible();
     await expect(page.getByText(displayName)).toHaveCount(0);
-    await expect(page.getByText("Party details")).toHaveCount(0);
-    await expect(page.getByText("Current RSVP")).toHaveCount(0);
+    await expect(page.getByText("Festdetaljer")).toHaveCount(0);
+    await expect(page.getByText("Nuvarande svar")).toHaveCount(0);
 
     await page.goto(newInvitationUrl);
     await expect(page).toHaveURL(/\/rsvp-yes$/);
-    await expect(page.getByText(`Invitation for ${displayName}`)).toBeVisible();
-    await expect(page.getByText("You're on the list")).toBeVisible();
-    await expect(page.getByText("Please save this note.")).toHaveCount(0);
+    await expect(page.getByText(`Inbjudan till ${displayName}`)).toBeVisible();
+    await expect(page.getByText("Du står på listan")).toBeVisible();
+    await expect(
+      page.getByText("Spara gärna det här meddelandet."),
+    ).toHaveCount(0);
 
     await page.goto(guestDetailUrl);
-    await page.getByRole("button", { name: "Revoke Invitation" }).click();
+    await page
+      .getByRole("button", {
+        name: "Återkalla inbjudan",
+      })
+      .click();
     await expect(
-      page.getByText("The Invitation URL is no longer active."),
+      page.getByText("Inbjudningslänken är inte längre aktiv."),
     ).toBeVisible();
     await page.goto("/admin?tab=guests");
     const revokedGuestRow = page.getByTestId(`guest-row-${guestSlug}`);
     await expect(revokedGuestRow).toBeVisible();
     await openGuestDetail(page, displayName);
     await expect(
-      page.getByText(
-        "Regenerate this Guest's Invitation URL to restore access.",
-      ),
+      page.getByText("Skapa ny inbjudningslänk för att återställa åtkomst."),
     ).toBeVisible();
     await expect(page.getByTestId(`guest-rsvp-status-${guestSlug}`)).toHaveText(
-      "Yes",
+      "Ja",
     );
     await expect(page.getByTestId(`guest-rsvp-note-${guestSlug}`)).toHaveText(
-      "Please save this note.",
+      "Spara gärna det här meddelandet.",
     );
     await expect(
-      page.getByRole("button", { name: "Revoke Invitation" }),
+      page.getByRole("button", {
+        name: "Återkalla inbjudan",
+      }),
     ).toHaveCount(0);
 
     await page.goto(newInvitationUrl);
     await expect(
-      page.getByText("This invitation link is no longer active."),
+      page.getByText("Den här inbjudningslänken är inte längre aktiv."),
     ).toBeVisible();
     await expect(page.getByText(displayName)).toHaveCount(0);
-    await expect(page.getByText("Party details")).toHaveCount(0);
-    await expect(page.getByText("Current RSVP")).toHaveCount(0);
+    await expect(page.getByText("Festdetaljer")).toHaveCount(0);
+    await expect(page.getByText("Nuvarande svar")).toHaveCount(0);
   });
 
-  test("gates Confirmed Party Info and shows a sorted names-only Attendee List", async ({
+  test("skyddar information för bekräftade gäster och visar en sorterad gästlista med bara namn", async ({
     page,
   }) => {
     const runId = Date.now();
-    const confirmedInfo = `Confirmed details ${runId}`;
-    const privateNote = `Private RSVP note ${runId}`;
+    const confirmedInfo = `Bekräftade detaljer ${runId}`;
+    const privateNote = `Privat OSA-meddelande ${runId}`;
 
     const createGuest = async (displayName: string) => {
       await page.goto("/admin?tab=guests");
       await page.locator("#newGuestDisplayName").fill(displayName);
-      await page.getByRole("button", { name: "Create Guest" }).click();
-      await expect(page.getByText("The Invitation URL is ready")).toBeVisible();
+      await page
+        .getByRole("button", {
+          name: "Skapa gäst",
+        })
+        .click();
+      await expect(page.getByText("Inbjudningslänken är redo")).toBeVisible();
 
       await openGuestDetail(page, displayName);
       return getInvitationUrlFromGuestDetail(page, displayName);
@@ -369,15 +466,19 @@ test.describe("Admin View", () => {
 
     const submitResponse = async (
       invitationUrl: string,
-      answer: "Yes, I will attend" | "No, I cannot attend",
+      answer: "Ja, jag kommer" | "Nej, jag kan inte komma",
       note = "",
     ) => {
       await page.goto(invitationUrl);
       await page.getByLabel(answer).check();
-      await page.getByLabel("Note to host").fill(note);
-      await page.getByRole("button", { name: "Save RSVP" }).click();
-      await expect(page.getByText("Your choice was saved!")).toBeVisible();
-      if (answer === "Yes, I will attend") {
+      await page.getByLabel("Meddelande till värden").fill(note);
+      await page
+        .getByRole("button", {
+          name: "Spara svar",
+        })
+        .click();
+      await expect(page.getByText("Ditt svar sparades!")).toBeVisible();
+      if (answer === "Ja, jag kommer") {
         await expect(page).toHaveURL(/\/rsvp-yes\?rsvpSaved=1$/);
       } else {
         await expect(page).toHaveURL(/\/i\/[^/]+\/[^/]+\?rsvpSaved=1$/);
@@ -385,29 +486,41 @@ test.describe("Admin View", () => {
     };
 
     await page.goto("/admin/login");
-    await page.getByLabel("Password").fill("test-admin-password");
-    await page.getByRole("button", { name: "Log in" }).click();
-
-    await page.getByRole("tab", { name: "Party settings" }).click();
-    await page.getByLabel("Title").fill(`Confirmed List Party ${runId}`);
-    await page.getByLabel("Date and time").fill("2026-08-15T18:00");
+    await page.getByLabel("Lösenord").fill("test-admin-password");
     await page
-      .getByLabel("Location and logistics")
-      .fill("Stockholm, details shared privately.");
-    await page.getByLabel("Dress code").fill("Summer formal");
-    await page
-      .getByLabel("Public Party Info")
-      .fill("Public details before RSVP.");
-    await page.getByLabel("Confirmed Party Info").fill(confirmedInfo);
-    await page.getByLabel("Late Response Policy").selectOption("accept_late");
-    await page.getByRole("button", { name: "Save Party Settings" }).click();
-    await expect(page.getByText("Party Settings saved.")).toBeVisible();
+      .getByRole("button", {
+        name: "Logga in",
+      })
+      .click();
 
-    const adaName = `Ada Confirmed ${runId}`;
-    const monaName = `Mona Confirmed ${runId}`;
-    const zeldaName = `Zelda Confirmed ${runId}`;
-    const nedName = `Ned Declined ${runId}`;
-    const graceName = `Grace Waiting ${runId}`;
+    await page
+      .getByRole("tab", {
+        name: "Festinställningar",
+      })
+      .click();
+    await page.getByLabel("Titel").fill(`Bekräftad listfest ${runId}`);
+    await page.getByLabel("Datum och tid").fill("2026-08-15T18:00");
+    await page
+      .getByLabel("Plats och praktisk info")
+      .fill("Stockholm, detaljer delas privat.");
+    await page.getByLabel("Klädkod").fill("Sommarfin");
+    await page.getByLabel("Öppen festinfo").fill("Öppen information före OSA.");
+    await page.getByLabel("Info för bekräftade gäster").fill(confirmedInfo);
+    await page.getByLabel("Policy för sena svar").selectOption("accept_late");
+    await page
+      .getByRole("button", {
+        name: "Spara festinställningar",
+      })
+      .click();
+    await expect(
+      page.getByText("Festinställningarna har sparats."),
+    ).toBeVisible();
+
+    const adaName = `Anna Bekräftad ${runId}`;
+    const monaName = `Mona Bekräftad ${runId}`;
+    const zeldaName = `Zelda Bekräftad ${runId}`;
+    const nedName = `Nils Nekad ${runId}`;
+    const graceName = `Greta Väntar ${runId}`;
 
     const adaUrl = await createGuest(adaName);
     const monaUrl = await createGuest(monaName);
@@ -415,25 +528,31 @@ test.describe("Admin View", () => {
     const nedUrl = await createGuest(nedName);
     const graceUrl = await createGuest(graceName);
 
-    await submitResponse(zeldaUrl, "Yes, I will attend");
-    await submitResponse(adaUrl, "Yes, I will attend", privateNote);
-    await submitResponse(monaUrl, "Yes, I will attend");
-    await submitResponse(nedUrl, "No, I cannot attend");
+    await submitResponse(zeldaUrl, "Ja, jag kommer");
+    await submitResponse(adaUrl, "Ja, jag kommer", privateNote);
+    await submitResponse(monaUrl, "Ja, jag kommer");
+    await submitResponse(nedUrl, "Nej, jag kan inte komma");
 
     await page.goto(graceUrl);
-    await expect(page.getByText("Current RSVP: Not responded")).toBeVisible();
+    await expect(page.getByText("Nuvarande svar: Inte svarat")).toBeVisible();
     await expect(page.getByText(confirmedInfo)).toHaveCount(0);
     await expect(page.getByTestId("attendee-list")).toHaveCount(0);
 
     await page.goto(nedUrl);
-    await expect(page.getByText("Current RSVP: No")).toBeVisible();
-    await expect(page.getByText("So sorry you can't make it")).toBeVisible();
+    await expect(page.getByText("Nuvarande svar: Nej")).toBeVisible();
+    await expect(
+      page.getByText("Så tråkigt att du inte kan komma."),
+    ).toBeVisible();
     await expect(page.getByText(confirmedInfo)).toHaveCount(0);
     await expect(page.getByTestId("attendee-list")).toHaveCount(0);
 
     await page.goto(adaUrl);
     await expect(page.getByText(confirmedInfo)).toBeVisible();
-    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
     const attendeeItems = page.getByTestId("attendee-list").getByRole("row");
     const attendeeByName = (name: string) =>
       page.getByTestId("attendee-list").getByRole("row").filter({
@@ -453,14 +572,30 @@ test.describe("Admin View", () => {
     );
 
     await page.goto(adaUrl);
-    await page.getByRole("tab", { name: "Guest list" }).click();
-    await page.getByRole("button", { name: `Edit ${adaName} RSVP` }).click();
-    await page.getByRole("button", { name: "I am sure" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
+    await page
+      .getByRole("button", {
+        name: `Ändra svar för ${adaName}`,
+      })
+      .click();
+    await page
+      .getByRole("button", {
+        name: "Jag är säker",
+      })
+      .click();
     await expect(page).toHaveURL(/\/i\/[^/]+\/[^/]+\?rsvpSaved=1$/);
 
     await page.goto(monaUrl);
     await expect(page.getByText(confirmedInfo)).toBeVisible();
-    await page.getByRole("tab", { name: "Guest list" }).click();
+    await page
+      .getByRole("tab", {
+        name: "Gästlista",
+      })
+      .click();
     await expect(attendeeByName(adaName)).toHaveCount(0);
     await expect(attendeeByName(monaName)).toHaveText(monaName);
     await expect(attendeeByName(zeldaName)).toHaveText(zeldaName);

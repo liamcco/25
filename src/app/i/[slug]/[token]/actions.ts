@@ -54,7 +54,7 @@ function parseRsvpAnswer(value: FormDataEntryValue | null): RsvpAnswer {
     return value;
   }
 
-  throw new Error("RSVP answer is required");
+  throw new Error("OSA-svar krävs");
 }
 
 function getOptionalString(formData: FormData, name: string) {

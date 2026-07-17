@@ -32,10 +32,10 @@ export function InvitationCopyButton({
       size="sm"
       onClick={copyInvitationUrl}
       disabled={!invitationUrl}
-      aria-label={`Copy ${guestName} Invitation URL`}
+      aria-label={`Kopiera inbjudningslänk för ${guestName}`}
     >
       {copied ? <Check /> : <Copy />}
-      {copied ? "Copied" : "Copy link"}
+      {copied ? "Kopierad" : "Kopiera länk"}
     </Button>
   );
 }

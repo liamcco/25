@@ -1,19 +1,18 @@
 "use client";
 
-import { Pencil } from "lucide-react";
-import { useMemo } from "react";
-import { useFormStatus } from "react-dom";
 import { submitRsvp } from "@/app/i/[slug]/[token]/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Pencil } from "lucide-react";
+import { useMemo } from "react";
+import { useFormStatus } from "react-dom";
 
 type DeclineRsvpDialogProps = {
   guestName: string;
@@ -37,7 +36,7 @@ export function DeclineRsvpDialog({
             type="button"
             variant="outline"
             size="icon-sm"
-            aria-label={`Edit ${guestName} RSVP`}
+            aria-label={`Ändra svar för ${guestName}`}
           />
         }
       >
@@ -45,11 +44,7 @@ export function DeclineRsvpDialog({
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit RSVP</DialogTitle>
-          <DialogDescription>
-            This will update your RSVP and return you to the public invitation
-            page.
-          </DialogDescription>
+          <DialogTitle>Ändra svar</DialogTitle>
         </DialogHeader>
         <form action={submitRsvpForToken} className="grid gap-4">
           <input type="hidden" name="answer" value="no" />
@@ -62,7 +57,7 @@ export function DeclineRsvpDialog({
               className="accent-destructive"
               readOnly
             />
-            Can&apos;t go anymore :(
+            Kan inte komma längre :(
           </label>
           <DialogFooter>
             <DeclineSubmitButton />
@@ -78,7 +73,7 @@ function DeclineSubmitButton() {
 
   return (
     <Button type="submit" variant="destructive" disabled={pending}>
-      {pending ? "Saving..." : "I am sure"}
+      {pending ? "Sparar..." : "Jag är säker"}
     </Button>
   );
 }

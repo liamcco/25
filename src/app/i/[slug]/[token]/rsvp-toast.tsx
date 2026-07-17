@@ -11,7 +11,7 @@ export function RsvpToast({
 }) {
   useEffect(() => {
     if (feedback?.rsvpSaved === "1") {
-      toast.success("Your choice was saved!");
+      toast.success("Ditt svar sparades!");
     }
   }, [feedback?.rsvpSaved]);
 

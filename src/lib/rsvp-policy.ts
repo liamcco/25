@@ -27,9 +27,9 @@ export type RsvpChangeDecision =
     };
 
 const STOCKHOLM_TIME_ZONE = "Europe/Stockholm";
-export const LATE_RESPONSE_ACCEPTED_MESSAGE = "You can still drop by.";
+export const LATE_RESPONSE_ACCEPTED_MESSAGE = "Du kan fortfarande komma förbi.";
 export const LATE_RESPONSE_DECLINED_MESSAGE =
-  "There are too many guests, sorry.";
+  "Det är för många gäster, tyvärr.";
 
 type StockholmDateParts = {
   year: number;
@@ -90,14 +90,14 @@ export function evaluateRsvpChange(
 
 export function formatRsvpState(rsvp: RsvpState) {
   if (rsvp.status === "not_responded") {
-    return "Not responded";
+    return "Inte svarat";
   }
 
   if (rsvp.status === "yes" && rsvp.isLate) {
-    return "Yes late";
+    return "Ja, sent";
   }
 
-  return rsvp.status === "yes" ? "Yes" : "No";
+  return rsvp.status === "yes" ? "Ja" : "Nej";
 }
 
 function toRsvpState(

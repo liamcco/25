@@ -80,11 +80,11 @@ export default async function GuestDetailPage({
             )}
           >
             <Users />
-            Guest list
+            Gästlista
           </Link>
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              Guest detail
+              Gästdetaljer
             </p>
             <h1 className="text-3xl font-semibold tracking-normal">
               {guest.displayName}
@@ -98,11 +98,10 @@ export default async function GuestDetailPage({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="size-4" />
-              Guest settings
+              Gästinställningar
             </CardTitle>
             <CardDescription>
-              Edit the displayed name and manage this guest&apos;s active
-              invitation link.
+              Ändra visningsnamnet och hantera gästens aktiva inbjudningslänk.
             </CardDescription>
           </CardHeader>
           <form action={saveGuestDisplayName} className="flex flex-col gap-6">
@@ -115,7 +114,7 @@ export default async function GuestDetailPage({
               />
               <Field>
                 <FieldLabel htmlFor={`displayName-${guest.id}`}>
-                  Display name
+                  Visningsnamn
                 </FieldLabel>
                 <Input
                   id={`displayName-${guest.id}`}
@@ -128,10 +127,10 @@ export default async function GuestDetailPage({
             <CardFooter>
               <PendingSubmitButton
                 variant="outline"
-                pendingLabel="Saving Guest..."
+                pendingLabel="Sparar gäst..."
               >
                 <Save />
-                Save Guest
+                Spara gäst
               </PendingSubmitButton>
             </CardFooter>
           </form>
@@ -141,10 +140,10 @@ export default async function GuestDetailPage({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ClipboardList className="size-4" />
-              Invitation and RSVP
+              Inbjudan och OSA
             </CardTitle>
             <CardDescription>
-              Current invitation access and the latest saved RSVP state.
+              Aktuell inbjudningsåtkomst och senast sparade OSA-status.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -155,9 +154,9 @@ export default async function GuestDetailPage({
               />
             ) : (
               <Alert>
-                <AlertTitle>Invitation revoked</AlertTitle>
+                <AlertTitle>Inbjudan återkallad</AlertTitle>
                 <AlertDescription>
-                  Regenerate this Guest&apos;s Invitation URL to restore access.
+                  Skapa ny inbjudningslänk för att återställa åtkomst.
                 </AlertDescription>
               </Alert>
             )}
@@ -172,10 +171,10 @@ export default async function GuestDetailPage({
                 />
                 <PendingSubmitButton
                   variant="outline"
-                  pendingLabel="Regenerating..."
+                  pendingLabel="Skapar om..."
                 >
                   <RefreshCw />
-                  Regenerate Invitation URL
+                  Skapa ny inbjudningslänk
                 </PendingSubmitButton>
               </form>
               {guest.invitationUrl ? (
@@ -188,10 +187,10 @@ export default async function GuestDetailPage({
                   />
                   <PendingSubmitButton
                     variant="destructive"
-                    pendingLabel="Revoking..."
+                    pendingLabel="Återkallar..."
                   >
                     <Ban />
-                    Revoke Invitation
+                    Återkalla inbjudan
                   </PendingSubmitButton>
                 </form>
               ) : null}
@@ -199,7 +198,7 @@ export default async function GuestDetailPage({
 
             <div className="grid gap-3 rounded-md bg-muted/50 p-3 text-sm">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium">RSVP status</span>
+                <span className="font-medium">OSA-status</span>
                 <Badge
                   variant={
                     guest.rsvp.status === "no"
@@ -214,7 +213,7 @@ export default async function GuestDetailPage({
                 </Badge>
               </div>
               <div className="grid gap-1">
-                <span className="font-medium">RSVP note</span>
+                <span className="font-medium">OSA-meddelande</span>
                 {guest.rsvpNote ? (
                   <p
                     data-testid={`guest-rsvp-note-${guest.guestNameSlug}`}
@@ -223,7 +222,9 @@ export default async function GuestDetailPage({
                     {guest.rsvpNote}
                   </p>
                 ) : (
-                  <p className="text-muted-foreground">No RSVP note yet.</p>
+                  <p className="text-muted-foreground">
+                    Inget OSA-meddelande ännu.
+                  </p>
                 )}
               </div>
             </div>
@@ -244,27 +245,27 @@ function GuestDetailStatusAlerts({
       {params?.guestSaved === "1" ? (
         <Alert>
           <CheckCircle2 />
-          <AlertTitle>Guest saved</AlertTitle>
+          <AlertTitle>Gäst sparad</AlertTitle>
           <AlertDescription>
-            The canonical Invitation URL has been updated.
+            Den kanoniska inbjudningslänken har uppdaterats.
           </AlertDescription>
         </Alert>
       ) : null}
       {params?.invitationRegenerated === "1" ? (
         <Alert>
           <RefreshCw />
-          <AlertTitle>Invitation regenerated</AlertTitle>
+          <AlertTitle>Inbjudan har skapats om</AlertTitle>
           <AlertDescription>
-            The previous Invitation URL is no longer active.
+            Den tidigare inbjudningslänken är inte längre aktiv.
           </AlertDescription>
         </Alert>
       ) : null}
       {params?.invitationRevoked === "1" ? (
         <Alert variant="destructive">
           <Ban />
-          <AlertTitle>Invitation revoked</AlertTitle>
+          <AlertTitle>Inbjudan återkallad</AlertTitle>
           <AlertDescription>
-            The Invitation URL is no longer active.
+            Inbjudningslänken är inte längre aktiv.
           </AlertDescription>
         </Alert>
       ) : null}

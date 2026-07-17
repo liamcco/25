@@ -30,14 +30,14 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
     <main className="flex min-h-dvh items-center justify-center bg-muted/30 px-6 py-10 text-foreground">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Admin login</CardTitle>
-          <CardDescription>Enter the host password.</CardDescription>
+          <CardTitle className="text-xl">Admininloggning</CardTitle>
+          <CardDescription>Ange värdens lösenord.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={loginAdmin} className="flex flex-col gap-5">
             <FieldGroup>
               <Field data-invalid={hasInvalidPassword}>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <FieldLabel htmlFor="password">Lösenord</FieldLabel>
                 <Input
                   id="password"
                   name="password"
@@ -53,15 +53,15 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
             </FieldGroup>
             {hasInvalidPassword ? (
               <Alert variant="destructive">
-                <AlertTitle>Login failed</AlertTitle>
+                <AlertTitle>Inloggningen misslyckades</AlertTitle>
                 <AlertDescription id="password-error">
-                  The password did not match the configured admin password.
+                  Lösenordet matchade inte det konfigurerade adminlösenordet.
                 </AlertDescription>
               </Alert>
             ) : null}
-            <PendingSubmitButton pendingLabel="Logging in...">
+            <PendingSubmitButton pendingLabel="Loggar in...">
               <LogIn />
-              Log in
+              Logga in
             </PendingSubmitButton>
           </form>
         </CardContent>

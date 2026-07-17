@@ -1,3 +1,7 @@
+import { RsvpForm } from "@/app/i/[slug]/[token]/rsvp-form";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { PartySettings } from "@/lib/admin";
+import type { RsvpState } from "@/lib/rsvp-policy";
 import {
   CalendarDays,
   LockKeyhole,
@@ -6,10 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { RsvpForm } from "@/app/i/[slug]/[token]/rsvp-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { PartySettings } from "@/lib/admin";
-import type { RsvpState } from "@/lib/rsvp-policy";
 
 type InvitationShellProps = {
   children: ReactNode;
@@ -18,7 +18,7 @@ type InvitationShellProps = {
 type InvitationHeaderProps = {
   guestName: string;
   headline: string;
-  intro: string;
+  intro?: string;
 };
 
 type PartyDetailsCardProps = {
@@ -53,14 +53,16 @@ export function InvitationHeader({
   return (
     <header className="rounded-lg border bg-card px-5 py-6 shadow-sm sm:px-7 sm:py-8">
       <p className="text-sm font-medium text-muted-foreground">
-        Invitation for {guestName}
+        Inbjudan till {guestName}
       </p>
       <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-normal sm:text-5xl">
         {headline}
       </h1>
-      <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-        {intro}
-      </p>
+      {intro && (
+        <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
+          {intro}
+        </p>
+      )}
     </header>
   );
 }
@@ -68,28 +70,25 @@ export function InvitationHeader({
 export function PartyDetailsCard({ settings }: PartyDetailsCardProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Party details</CardTitle>
-      </CardHeader>
       <CardContent className="grid gap-5">
         <InvitationDetail
           icon={<CalendarDays />}
-          label="When"
+          label="När"
           value={formatPartyDate(settings.startsAt)}
         />
         <InvitationDetail
           icon={<MapPin />}
-          label="Location"
+          label="Plats"
           value={settings.location}
         />
         <InvitationDetail
           icon={<Shirt />}
-          label="Dress code"
+          label="Klädkod"
           value={settings.dressCode}
         />
         <InvitationDetail
           icon={<Sparkles />}
-          label="Public Party Info"
+          label="Information"
           value={settings.publicInfo}
         />
       </CardContent>
@@ -99,7 +98,7 @@ export function PartyDetailsCard({ settings }: PartyDetailsCardProps) {
 
 export function RsvpFormCard({
   currentRsvp,
-  title = "RSVP",
+  title = "OSA",
   token,
 }: RsvpFormCardProps) {
   return (
@@ -119,13 +118,10 @@ export function ConfirmedDetailsCard({
 }: ConfirmedDetailsCardProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Confirmed Party Info</CardTitle>
-      </CardHeader>
       <CardContent className="flex flex-col gap-6">
         <InvitationDetail
           icon={<LockKeyhole />}
-          label="Confirmed Party Info"
+          label="Hemlig information"
           value={confirmedInfo}
         />
       </CardContent>
@@ -147,14 +143,14 @@ function InvitationDetail({
       <div className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</div>
       <h2 className="text-sm font-medium text-muted-foreground">{label}</h2>
       <p className="col-start-2 whitespace-pre-wrap text-base leading-7">
-        {value || "TBD"}
+        {value || "Kommer snart"}
       </p>
     </section>
   );
 }
 
 function formatPartyDate(date: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("sv-SE", {
     dateStyle: "full",
     timeStyle: "short",
     timeZone: "Europe/Stockholm",

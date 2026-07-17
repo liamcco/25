@@ -34,11 +34,11 @@ export function RsvpForm({ currentRsvp, token }: RsvpFormProps) {
   return (
     <form action={submitRsvpForToken} className="grid gap-4">
       <p className="text-base font-medium">
-        Current RSVP: {formatRsvpState(currentRsvp)}
+        Nuvarande svar: {formatRsvpState(currentRsvp)}
       </p>
       <fieldset className="grid gap-3">
         <legend className="text-sm font-medium text-muted-foreground">
-          Your response
+          Ditt svar
         </legend>
         <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/60 has-checked:border-primary has-checked:bg-primary/5">
           <input
@@ -50,7 +50,7 @@ export function RsvpForm({ currentRsvp, token }: RsvpFormProps) {
             required
             className="accent-primary"
           />
-          Yes, I will attend
+          Ja, jag kommer
         </label>
         <label className="flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted/60 has-checked:border-primary has-checked:bg-primary/5">
           <input
@@ -62,15 +62,15 @@ export function RsvpForm({ currentRsvp, token }: RsvpFormProps) {
             required
             className="accent-primary"
           />
-          No, I cannot attend
+          Nej, jag kan inte komma
         </label>
       </fieldset>
       <label className="grid gap-2 text-sm font-medium" htmlFor="note">
-        Note to host
+        Meddelande till värden
         <Textarea
           id="note"
           name="note"
-          placeholder="Optional"
+          placeholder="Valfritt"
           value={note}
           onChange={(event) => setNote(event.target.value)}
           className="font-normal"
@@ -110,7 +110,7 @@ function RsvpSubmitButton({
       )}
     >
       <Send />
-      {pending ? "Saving..." : "Save RSVP"}
+      {pending ? "Sparar..." : "Spara svar"}
     </Button>
   );
 }
